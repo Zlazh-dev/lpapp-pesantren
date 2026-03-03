@@ -1,0 +1,23 @@
+﻿src/app/(desktop)/keuangan/_components/ActivateBillingModal.tsx(74,62): error TS2503: Cannot find namespace 'JSX'.
+src/app/(desktop)/keuangan/activate/[billingModelId]/page.tsx(77,76): error TS2503: Cannot find namespace 'JSX'.
+src/app/(desktop)/keuangan/santri/page.tsx(310,29): error TS2503: Cannot find namespace 'JSX'.
+src/app/(desktop)/master-data/santri/manage/[id]/finance/page.tsx(42,50): error TS2503: Cannot find namespace 'JSX'.
+src/app/(marketing)/_components/DesktopLanding.tsx(348,18): error TS2322: Type 'RefObject<HTMLElement | null>' is not assignable to type 'Ref<HTMLDivElement> | undefined'.
+  Type 'RefObject<HTMLElement | null>' is not assignable to type 'RefObject<HTMLDivElement | null>'.
+    Type 'HTMLElement | null' is not assignable to type 'HTMLDivElement | null'.
+      Property 'align' is missing in type 'HTMLElement' but required in type 'HTMLDivElement'.
+src/app/(mobile)/m-dashboard/page.tsx(29,116): error TS2339: Property 'name' does not exist on type '{ id: string; username: string; fullName: string; role: string; roleCodes: string[]; roles: string[]; scopes: RoleScopeEntry[]; allowedGroupCodes: string[]; allowedGroups: string[]; allowedPagePaths: string[]; }'.
+src/app/(mobile)/m-users/users/[userId]/page.tsx(233,94): error TS2345: Argument of type '{ roleCode: string; scopeType: string; scopeId: string; userId: string; }' is not assignable to parameter of type '{ userId: string; roleCode: string; scopeType: "CLASS_GROUP" | "DORM_ROOM" | "DORM_BUILDING" | "DORM_COMPLEX"; scopeId: string; }'.
+  Types of property 'scopeType' are incompatible.
+    Type 'string' is not assignable to type '"CLASS_GROUP" | "DORM_ROOM" | "DORM_BUILDING" | "DORM_COMPLEX"'.
+src/app/api/upload-logo/route.ts(62,13): error TS2322: Type 'Buffer<ArrayBufferLike>' is not assignable to type 'Buffer<ArrayBuffer>'.
+  Type 'ArrayBufferLike' is not assignable to type 'ArrayBuffer'.
+    Type 'SharedArrayBuffer' is missing the following properties from type 'ArrayBuffer': resizable, resize, detached, transfer, transferToFixedLength
+src/components/providers/TRPCProvider.tsx(44,21): error TS2322: Type '(input: URL | RequestInfo, init?: RequestInit | undefined) => Promise<Response>' is not assignable to type 'FetchEsque'.
+  Types of parameters 'init' and 'init' are incompatible.
+    Type 'RequestInit | RequestInitEsque | undefined' is not assignable to type 'RequestInit | undefined'.
+      Type 'RequestInitEsque' is not assignable to type 'RequestInit'.
+        Types of property 'body' are incompatible.
+          Type 'string | Uint8Array<ArrayBufferLike> | Blob | FormData | File | null | undefined' is not assignable to type 'BodyInit | null | undefined'.
+            Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'BodyInit | null | undefined'.
+              Type 'Uint8Array<ArrayBufferLike>' is missing the following properties from type 'URLSearchParams': size, append, delete, get, and 2 more.

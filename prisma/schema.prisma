@@ -1,0 +1,707 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== ENUMS ====================
+
+enum Role {
+  ADMIN
+  STAF_PENDATAAN
+  STAF_MADRASAH
+  WALI_KELAS
+  PEMBIMBING_KAMAR
+}
+
+enum BillStatus {
+  PENDING
+  PAID
+  PARTIAL
+}
+
+enum InvoiceStatus {
+  PENDING
+  PARTIAL
+  PAID
+  VOID
+}
+
+enum PaymentMethod {
+  CASH
+  TRANSFER
+  OTHER
+}
+
+enum BillingPeriodDisplayMode {
+  GREGORIAN
+  HIJRI
+}
+
+enum RoleRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AttendanceStatus {
+  HADIR
+  SAKIT
+  IZIN
+  ALPHA
+}
+
+// ==================== MODELS ====================
+
+model User {
+  id              String    @id @default(cuid())
+  username        String    @unique
+  password        String
+  fullName        String    @map("full_name")
+  phone           String?   @map("phone")
+  photoUrl        String?   @map("photo_url")
+  role            Role
+  isActive        Boolean   @default(true) @map("is_active")
+  isEnabled       Boolean   @default(false) @map("is_enabled")
+  enabledAt       DateTime? @map("enabled_at")
+  enabledByUserId String?   @map("enabled_by_user_id")
+  disabledReason  String?   @map("disabled_reason")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  enabledBy            User?              @relation("UserEnabledBy", fields: [enabledByUserId], references: [id], onDelete: SetNull)
+  enabledUsers         User[]             @relation("UserEnabledBy")
+  userRoles            UserRole[]
+  roleScopes           RoleScope[]
+  createdInviteLinks   UserInviteLink[]   @relation("InviteCreatedBy")
+  roleRequests         RoleRequest[]      @relation("RoleRequestUser")
+  reviewedRoleRequests RoleRequest[]      @relation("RoleRequestReviewer")
+  roleRequestTokens    RoleRequestToken[]
+  supervisedRooms      DormRoom[]         @relation("RoomSupervisor")
+  waliKelasOf          ClassGroup[]       @relation("WaliKelas")
+  changeRequestMessages ChangeRequestMessage[]
+
+  @@index([enabledByUserId])
+  @@map("users")
+}
+
+model RoleEntry {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  userRoles       UserRole[]
+  pageGroupAccess RolePageGroupAccess[]
+  pageAccess      RolePage[]
+
+  @@map("role_entries")
+}
+
+model UserRole {
+  userId String @map("user_id")
+  roleId String @map("role_id")
+
+  user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role RoleEntry @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model RoleScope {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  roleCode  String   @map("role_code")
+  scopeType String   @map("scope_type") // CLASS_GROUP | DORM_ROOM | DORM_BUILDING | DORM_COMPLEX
+  scopeId   String   @map("scope_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, roleCode])
+  @@index([roleCode, scopeType, scopeId])
+  @@map("role_scopes")
+}
+
+// ==================== PAGE GROUP ACCESS ====================
+
+model PageGroup {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  pages      Page[]
+  roleAccess RolePageGroupAccess[]
+
+  @@map("page_groups")
+}
+
+model Page {
+  id        String   @id @default(cuid())
+  groupId   String   @map("group_id")
+  code      String   @unique
+  name      String
+  path      String
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  group      PageGroup   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  roleAccess RolePage[]
+
+  @@map("pages")
+}
+
+model RolePageGroupAccess {
+  roleId      String @map("role_id")
+  pageGroupId String @map("page_group_id")
+
+  role      RoleEntry @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  pageGroup PageGroup @relation(fields: [pageGroupId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, pageGroupId])
+  @@map("role_page_group_access")
+}
+
+model RolePage {
+  roleId String @map("role_id")
+  pageId String @map("page_id")
+
+  role RoleEntry @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  page Page      @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, pageId])
+  @@index([roleId])
+  @@index([pageId])
+  @@map("role_pages")
+}
+
+model Santri {
+  id          String    @id @default(cuid())
+  fullName    String    @map("full_name")
+  nis         String    @unique
+  gender      String    @default("L") // L or P
+  birthDate   DateTime? @map("birth_date")
+  birthPlace  String?   @map("birth_place")
+  phone       String?
+  fatherName  String?   @map("father_name")
+  motherName  String?   @map("mother_name")
+  fatherPhone String?   @map("father_phone")
+  motherPhone String?   @map("mother_phone")
+  dormRoomId  Int?      @map("dorm_room_id")
+  photoUrl    String?   @map("photo_url")
+  photoKey    String?   @unique @map("photo_key")
+  nik         String?   // Nomor Induk Kependudukan
+  noKK        String?   @map("no_kk") // Nomor Kartu Keluarga
+  kkFileUrl   String?   @map("kk_file_url") // URL file KK yang diupload
+  kkFileKey   String?   @unique @map("kk_file_key") // Storage key for KK file
+  address     Json? // {jalan, rt_rw, kelurahan, kecamatan, kota, provinsi, kodepos}
+  waliName    String?   @map("wali_name")
+  waliPhone   String?   @map("wali_phone")
+  description String?   @db.Text
+  educationLevel String? @map("education_level") // Jenjang: Ma'had Aly, Tahfidz, Formal
+  isActive    Boolean   @default(true) @map("is_active")
+  enrollmentDate DateTime? @map("enrollment_date")
+  deactivatedAt DateTime? @map("deactivated_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  classGroupId String? @map("class_group_id")
+
+  dormRoom        DormRoom?        @relation(fields: [dormRoomId], references: [id], onDelete: SetNull)
+  dormAssignments DormAssignment[]
+  classGroup      ClassGroup?      @relation(fields: [classGroupId], references: [id], onDelete: SetNull)
+  bills           Bill[]
+  invoices        Invoice[]
+  attendances     Attendance[]
+  sharedLinks     SharedLink[]
+  changeRequests  SantriChangeRequest[]
+  sectionMembers  SectionMember[]
+
+  @@map("santri")
+}
+
+// Old Kamar and Kelas models removed — replaced by DormRoom and ClassGroup
+
+model BillingModel {
+  id            String   @id @default(cuid())
+  name          String   @unique
+  description   String?
+  periodType    String   @map("period_type") // "bulanan", "tahunan", "sekali"
+  defaultAmount Float?   @map("default_amount")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  bills    Bill[]
+  items    BillingModelItem[]
+  scopes   BillingModelScope[]
+  invoices Invoice[]
+
+  @@map("billing_models")
+}
+
+model BillingModelItem {
+  id             String   @id @default(cuid())
+  billingModelId String   @map("billing_model_id")
+  label          String
+  amount         Float
+  sortOrder      Int      @default(0) @map("sort_order")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  billingModel BillingModel @relation(fields: [billingModelId], references: [id], onDelete: Cascade)
+
+  @@map("billing_model_items")
+}
+
+model BillingModelScope {
+  id             String   @id @default(cuid())
+  billingModelId String   @map("billing_model_id")
+  scopeType      String   @map("scope_type") // ALL, ACADEMIC_LEVEL, GRADE, CLASSGROUP, ROOM, GENDER
+  scopeRefId     String?  @map("scope_ref_id") // FK to respective entity (nullable for ALL/GENDER)
+  scopeValue     String?  @map("scope_value") // Extra value e.g. "L"/"P" for GENDER
+  include        Boolean  @default(true)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  billingModel BillingModel @relation(fields: [billingModelId], references: [id], onDelete: Cascade)
+
+  @@map("billing_model_scopes")
+}
+
+model Bill {
+  id             String     @id @default(cuid())
+  santriId       String     @map("santri_id")
+  type           String // SPP, Asrama, Makan, Kitab, Seragam
+  amount         Float
+  paidAmount     Float      @default(0) @map("paid_amount")
+  dueDate        DateTime   @map("due_date")
+  paidDate       DateTime?  @map("paid_date")
+  status         BillStatus @default(PENDING)
+  notes          String?
+  period         String? // e.g. "Januari 2025"
+  billingModelId String?    @map("billing_model_id")
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
+
+  santri        Santri         @relation(fields: [santriId], references: [id], onDelete: Cascade)
+  billingModel  BillingModel?  @relation(fields: [billingModelId], references: [id], onDelete: SetNull)
+  paymentProofs PaymentProof[]
+
+  @@index([santriId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("bills")
+}
+
+model PaymentProof {
+  id         String    @id @default(cuid())
+  billId     String?   @map("bill_id")
+  invoiceId  String?   @map("invoice_id")
+  amount     Int       @default(0)
+  imageUrl   String    @map("image_url")
+  uploadedBy String?   @map("uploaded_by") // "WALI" or "BENDAHARA" or username
+  status     String    @default("PENDING") // "PENDING", "APPROVED", "REJECTED"
+  note       String?   @map("notes")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  reviewedAt DateTime? @map("reviewed_at")
+  reviewedBy String?   @map("reviewed_by")
+  verifiedAt DateTime? @map("verified_at") // legacy: bill flow
+
+  bill    Bill?    @relation(fields: [billId], references: [id], onDelete: Cascade)
+  invoice Invoice? @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([billId])
+  @@index([invoiceId])
+  @@index([status])
+  @@map("payment_proofs")
+}
+
+model Attendance {
+  id        String           @id @default(cuid())
+  santriId  String           @map("santri_id")
+  date      DateTime
+  status    AttendanceStatus
+  notes     String?
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  santri Santri @relation(fields: [santriId], references: [id], onDelete: Cascade)
+
+  @@unique([santriId, date])
+  @@index([date])
+  @@map("attendances")
+}
+
+model SharedLink {
+  id           String    @id @default(cuid())
+  santriId     String    @map("santri_id")
+  tokenHash    String    @unique @map("token_hash")
+  expiresAt    DateTime? @map("expires_at")
+  revokedAt    DateTime? @map("revoked_at")
+  lastAccessAt DateTime? @map("last_access_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  santri Santri @relation(fields: [santriId], references: [id], onDelete: Cascade)
+
+  @@index([santriId])
+  @@map("shared_links")
+}
+
+model UserInviteLink {
+  id              String   @id @default(cuid())
+  tokenHash       String   @unique @map("token_hash")
+  createdByUserId String   @map("created_by_user_id")
+  expiry          DateTime @map("expiry")
+  isRevoked       Boolean  @default(false) @map("is_revoked")
+  useLimit        Int?     @map("use_limit")
+  usedCount       Int      @default(0) @map("used_count")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  createdBy User @relation("InviteCreatedBy", fields: [createdByUserId], references: [id], onDelete: Cascade)
+
+  @@index([createdByUserId])
+  @@index([expiry])
+  @@map("user_invite_links")
+}
+
+model RoleRequest {
+  id                 String            @id @default(cuid())
+  userId             String            @map("user_id")
+  requestedRoleCodes String[]          @map("requested_role_codes")
+  note               String?
+  status             RoleRequestStatus @default(PENDING)
+  reviewerUserId     String?           @map("reviewer_user_id")
+  reviewedAt         DateTime?         @map("reviewed_at")
+  reviewNote         String?           @map("review_note")
+  createdAt          DateTime          @default(now()) @map("created_at")
+
+  user       User  @relation("RoleRequestUser", fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy User? @relation("RoleRequestReviewer", fields: [reviewerUserId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([userId, status])
+  @@index([reviewerUserId])
+  @@map("role_requests")
+}
+
+model RoleRequestToken {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, usedAt])
+  @@index([expiresAt])
+  @@map("role_request_tokens")
+}
+
+// ==================== INVOICE / PAYMENT (NORMALIZED) ====================
+
+model Invoice {
+  id                String                   @id @default(cuid())
+  santriId          String                   @map("santri_id")
+  billingModelId    String                   @map("billing_model_id")
+  periodKey         String                   @map("period_key") // e.g. "2025-04" or "2025"
+  periodYear        Int?                     @map("period_year")
+  periodMonth       Int?                     @map("period_month")
+  periodDisplayMode BillingPeriodDisplayMode @default(GREGORIAN) @map("period_display_mode")
+  hijriYear         Int?                     @map("hijri_year")
+  hijriMonth        Int?                     @map("hijri_month")
+  hijriVariant      String?                  @default("indonesia") @map("hijri_variant")
+  issuedAt          DateTime                 @default(now()) @map("issued_at")
+  dueAt             DateTime?                @map("due_at")
+  totalAmount       Float                    @map("total_amount")
+  status            InvoiceStatus            @default(PENDING)
+  createdAt         DateTime                 @default(now()) @map("created_at")
+  updatedAt         DateTime                 @updatedAt @map("updated_at")
+
+  santri        Santri         @relation(fields: [santriId], references: [id], onDelete: Cascade)
+  billingModel  BillingModel   @relation(fields: [billingModelId], references: [id], onDelete: Cascade)
+  items         InvoiceItem[]
+  payments      Payment[]
+  paymentProofs PaymentProof[]
+
+  @@unique([santriId, billingModelId, periodKey])
+  @@index([santriId])
+  @@index([status])
+  @@index([periodKey])
+  @@index([periodDisplayMode, periodYear, periodMonth])
+  @@index([periodDisplayMode, hijriYear, hijriMonth])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id        String   @id @default(cuid())
+  invoiceId String   @map("invoice_id")
+  label     String
+  amount    Float
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("invoice_items")
+}
+
+model Payment {
+  id               String        @id @default(cuid())
+  invoiceId        String        @map("invoice_id")
+  amount           Float
+  method           PaymentMethod @default(CASH)
+  paidAt           DateTime      @default(now()) @map("paid_at")
+  proofUrl         String?       @map("proof_url")
+  proofPublicId    String?       @map("proof_public_id")
+  verifiedByUserId String?       @map("verified_by_user_id")
+  verifiedAt       DateTime?     @map("verified_at")
+  note             String?
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+
+  invoice Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  receipt Receipt?
+
+  @@index([invoiceId])
+  @@map("payments")
+}
+
+model Receipt {
+  id          String   @id @default(cuid())
+  paymentId   String   @unique @map("payment_id")
+  receiptNo   String   @unique @map("receipt_no")
+  generatedAt DateTime @default(now()) @map("generated_at")
+  pdfUrl      String?  @map("pdf_url")
+  snapshot    Json?
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@map("receipts")
+}
+
+// ==================== DORM STRUCTURE ====================
+
+model DormComplex {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  code      String?  @unique
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  buildings DormBuilding[]
+
+  @@map("dorm_complex")
+}
+
+model DormBuilding {
+  id        Int      @id @default(autoincrement())
+  complexId Int      @map("complex_id")
+  name      String
+  code      String?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  complex DormComplex @relation(fields: [complexId], references: [id], onDelete: Cascade)
+  floors  DormFloor[]
+
+  @@unique([complexId, name])
+  @@map("dorm_building")
+}
+
+model DormFloor {
+  id         Int      @id @default(autoincrement())
+  buildingId Int      @map("building_id")
+  number     Int
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  building DormBuilding @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  rooms    DormRoom[]
+
+  @@unique([buildingId, number])
+  @@map("dorm_floor")
+}
+
+model DormRoom {
+  id           Int      @id @default(autoincrement())
+  floorId      Int      @map("floor_id")
+  name         String
+  code         String?
+  capacity     Int      @default(20)
+  supervisorId String?  @map("supervisor_id")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  floor       DormFloor        @relation(fields: [floorId], references: [id], onDelete: Cascade)
+  supervisor  User?            @relation("RoomSupervisor", fields: [supervisorId], references: [id], onDelete: SetNull)
+  assignments DormAssignment[]
+  santri      Santri[]
+
+  @@unique([floorId, name])
+  @@index([supervisorId])
+  @@map("dorm_room")
+}
+
+model DormAssignment {
+  id        Int       @id @default(autoincrement())
+  santriId  String    @map("santri_id")
+  roomId    Int       @map("room_id")
+  startAt   DateTime  @default(now()) @map("start_at")
+  endAt     DateTime? @map("end_at")
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  santri Santri   @relation(fields: [santriId], references: [id], onDelete: Cascade)
+  room   DormRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([santriId, isActive])
+  @@index([roomId, isActive])
+  @@map("dorm_assignment")
+}
+
+// ==================== ACADEMIC STRUCTURE ====================
+
+model AcademicLevel {
+  id        String   @id @default(cuid())
+  code      String   @unique // MI, MTs, MA
+  name      String // Madrasah Ibtidaiyah, etc.
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  grades Grade[]
+
+  @@map("academic_levels")
+}
+
+model Grade {
+  id        String   @id @default(cuid())
+  levelId   String   @map("level_id")
+  number    Int // 1, 2, ..., 12
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  level       AcademicLevel @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  classGroups ClassGroup[]
+
+  @@unique([levelId, number])
+  @@map("grades")
+}
+
+model SchoolYear {
+  id        String   @id @default(cuid())
+  name      String   @unique // "2024/2025"
+  isActive  Boolean  @default(false) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  classGroups ClassGroup[]
+
+  @@map("school_years")
+}
+
+model ClassGroup {
+  id           String   @id @default(cuid())
+  gradeId      String   @map("grade_id")
+  schoolYearId String?  @map("school_year_id")
+  waliKelasId  String?  @map("wali_kelas_id")
+  suffix       String // A, B, C, etc.
+  name         String // "7A", "10B", etc.
+  capacity     Int?
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  grade      Grade       @relation(fields: [gradeId], references: [id], onDelete: Cascade)
+  schoolYear SchoolYear? @relation(fields: [schoolYearId], references: [id], onDelete: SetNull)
+  waliKelas  User?       @relation("WaliKelas", fields: [waliKelasId], references: [id], onDelete: SetNull)
+  santri     Santri[]
+
+  @@unique([gradeId, schoolYearId, suffix])
+  @@index([waliKelasId])
+  @@map("class_groups")
+}
+
+// ==================== APP SETTINGS ====================
+
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("app_settings")
+}
+
+// ==================== SANTRI CHANGE REQUESTS ====================
+
+model SantriChangeRequest {
+  id             String    @id @default(cuid())
+  santriId       String    @map("santri_id")
+  type           String    // EDIT | DELETE | OTHER
+  description    String    @db.Text
+  changeField    String?   @map("change_field")
+  currentValue   String?   @map("current_value") @db.Text
+  requestedValue String?   @map("requested_value") @db.Text
+  department     String?   // perbendaharaan | madrasah | other
+  status         String    @default("PENDING") // PENDING | IN_DISCUSSION | APPROVED | REJECTED
+  requestedBy    String    @map("requested_by")
+  reviewedBy     String?   @map("reviewed_by")
+  reviewNote     String?   @map("review_note") @db.Text
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  santri   Santri                 @relation(fields: [santriId], references: [id], onDelete: Cascade)
+  messages ChangeRequestMessage[]
+
+  @@index([santriId])
+  @@index([status])
+  @@index([requestedBy])
+  @@map("santri_change_requests")
+}
+
+model ChangeRequestMessage {
+  id        String    @id @default(cuid())
+  requestId String    @map("request_id")
+  senderId  String    @map("sender_id")
+  message   String    @db.Text
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  request SantriChangeRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  sender  User                @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+  @@index([senderId])
+  @@map("change_request_messages")
+}
+
+model SectionMember {
+  id        String   @id @default(cuid())
+  santriId  String   @map("santri_id")
+  section   String   // KEUANGAN | AKADEMIK
+  addedBy   String   @map("added_by") // userId
+  createdAt DateTime @default(now()) @map("created_at")
+
+  santri Santri @relation(fields: [santriId], references: [id], onDelete: Cascade)
+
+  @@unique([santriId, section])
+  @@index([section])
+  @@map("section_members")
+}

@@ -1,0 +1,325 @@
+@import "tailwindcss";
+
+:root {
+  --color-primary: #0f766e;
+  --color-primary-light: #14b8a6;
+  --color-primary-dark: #0d6b64;
+  --color-accent: #f59e0b;
+  --color-danger: #ef4444;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-info: #3b82f6;
+}
+
+body {
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Glass effect */
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Gradient backgrounds */
+.gradient-primary {
+  background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+}
+
+.gradient-accent {
+  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+}
+
+.gradient-sidebar {
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse-soft {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s infinite;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.25s ease-out forwards;
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Card hover */
+.card-hover {
+  transition: all 0.2s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* Status badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+}
+
+/* ═══════════════════════════════════════════════════════
+   MOBILE LAYOUT OVERRIDES
+   Applied inside .mobile-layout wrapper to ensure
+   all re-exported desktop pages look consistent on mobile
+   ═══════════════════════════════════════════════════════ */
+
+/* ─── Page headers: scale down for mobile ─── */
+.mobile-layout h1 {
+  font-size: 1.25rem !important;
+  line-height: 1.75rem !important;
+}
+
+.mobile-layout h2 {
+  font-size: 1.125rem !important;
+  line-height: 1.5rem !important;
+}
+
+/* ─── Remove desktop max-widths ─── */
+.mobile-layout .max-w-3xl,
+.mobile-layout .max-w-4xl,
+.mobile-layout .max-w-5xl,
+.mobile-layout .max-w-6xl,
+.mobile-layout .max-w-7xl {
+  max-width: 100% !important;
+}
+
+/* ─── Buttons: consistent h-10 sizing ─── */
+.mobile-layout button,
+.mobile-layout a[class*="rounded-xl"][class*="px-"] {
+  min-height: 2.5rem;
+}
+
+/* Primary action buttons */
+.mobile-layout a[class*="bg-gradient"],
+.mobile-layout button[class*="bg-gradient"] {
+  height: 2.5rem !important;
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+  font-size: 0.875rem !important;
+  border-radius: 0.75rem !important;
+}
+
+/* ─── Kebab/icon buttons: consistent w-10 h-10 ─── */
+.mobile-layout button[class*="w-10"][class*="h-10"],
+.mobile-layout button[aria-label] {
+  width: 2.5rem !important;
+  height: 2.5rem !important;
+  border-radius: 0.75rem !important;
+  flex-shrink: 0;
+}
+
+/* ─── Search inputs: consistent h-10 ─── */
+.mobile-layout input[type="text"],
+.mobile-layout input[type="search"],
+.mobile-layout input[placeholder*="Cari"],
+.mobile-layout input[placeholder*="cari"] {
+  height: 2.5rem !important;
+  font-size: 0.875rem !important;
+  border-radius: 0.75rem !important;
+}
+
+/* ─── Dropdown/kebab menus: mobile-friendly ─── */
+.mobile-layout div[class*="absolute"][class*="shadow-xl"][class*="rounded-xl"] {
+  border-radius: 0.75rem !important;
+  border-color: #f1f5f9 !important;
+}
+
+.mobile-layout div[class*="absolute"][class*="shadow-xl"] button {
+  padding: 0.75rem 1rem !important;
+  font-size: 0.875rem !important;
+}
+
+/* ─── Tables: make responsive ─── */
+.mobile-layout table {
+  font-size: 0.8125rem !important;
+}
+
+.mobile-layout th {
+  font-size: 0.625rem !important;
+  padding: 0.625rem 0.75rem !important;
+}
+
+.mobile-layout td {
+  padding: 0.625rem 0.75rem !important;
+}
+
+/* Hide columns that don't fit on mobile */
+@media (max-width: 640px) {
+
+  .mobile-layout th:nth-child(n+4),
+  .mobile-layout td:nth-child(n+4) {
+    display: none;
+  }
+}
+
+/* ─── Forms: mobile-optimized ─── */
+.mobile-layout textarea {
+  font-size: 0.875rem !important;
+  border-radius: 0.75rem !important;
+}
+
+.mobile-layout select {
+  height: 2.5rem !important;
+  font-size: 0.875rem !important;
+  border-radius: 0.75rem !important;
+}
+
+.mobile-layout label {
+  font-size: 0.75rem !important;
+}
+
+/* ─── Cards and containers ─── */
+.mobile-layout div[class*="rounded-2xl"][class*="border"] {
+  border-color: #f1f5f9 !important;
+}
+
+/* ─── Grid layouts: single column on mobile ─── */
+@media (max-width: 640px) {
+
+  .mobile-layout .grid-cols-2,
+  .mobile-layout .md\:grid-cols-2,
+  .mobile-layout .md\:grid-cols-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* ─── Pagination: compact for mobile ─── */
+.mobile-layout div[class*="border-t"] button[class*="rounded-md"] {
+  height: 2rem !important;
+  padding: 0 0.625rem !important;
+  font-size: 0.75rem !important;
+  border-radius: 0.5rem !important;
+}
+
+/* ─── Touch-optimized interactions ─── */
+.mobile-layout button:active,
+.mobile-layout a:active {
+  transform: scale(0.97);
+  transition: transform 0.1s;
+}
+
+/* ─── Modal backdrop: ensure full coverage ─── */
+.mobile-layout~div[class*="fixed"][class*="inset-0"],
+div[class*="fixed"][class*="inset-0"][class*="bg-black"] {
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+/* ─── Spacing adjustments ─── */
+.mobile-layout .space-y-6>*+* {
+  margin-top: 1rem !important;
+}
+
+.mobile-layout .space-y-5>*+* {
+  margin-top: 1rem !important;
+}
+
+.mobile-layout .px-5 {
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+}
+
+/* ─── Filter panels: mobile bottom-sheet style ─── */
+@media (max-width: 640px) {
+
+  .mobile-layout div[class*="absolute"][class*="w-72"]:not([data-kebab]),
+  .mobile-layout div[class*="absolute"][class*="w-52"]:not([data-kebab]) {
+    position: fixed !important;
+    bottom: 5.5rem !important;
+    left: 0.75rem !important;
+    right: 0.75rem !important;
+    top: auto !important;
+    width: auto !important;
+    border-radius: 1rem !important;
+    max-height: 60vh !important;
+    overflow-y: auto !important;
+  }
+}

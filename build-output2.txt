@@ -1,0 +1,169 @@
+﻿
+> lpapp@0.1.0 build
+> next build --webpack
+
+Γû▓ Next.js 16.1.6 (webpack)
+- Environments: .env
+
+node.exe : ΓÜá The "middleware" file convention is deprecated. Please use "prox
+y" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (ΓÜá The "middle...leware-to-proxy 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 11.4s
+  Running TypeScript ...
+  Collecting page data using 15 workers ...
+  Generating static pages using 15 workers (0/69) ...
+  Generating static pages using 15 workers (17/69) 
+  Generating static pages using 15 workers (34/69) 
+  Generating static pages using 15 workers (51/69) 
+Γ£ô Generating static pages using 15 workers (69/69) in 3.0s
+  Finalizing page optimization ...
+  Collecting build traces ...
+ΓÜá Failed to copy traced files for D:\code-project\lpapp\.next\server\app\(mar
+keting)\page.js Error: ENOENT: no such file or directory, copyfile 'D:\code-pro
+ject\lpapp\.next\server\app\(marketing)\page_client-reference-manifest.js' -> '
+D:\code-project\lpapp\.next\standalone\.next\server\app\(marketing)\page_client
+-reference-manifest.js'
+    at ignore-listed frames {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'copyfile',
+  path: 'D:\\code-project\\lpapp\\.next\\server\\app\\(marketing)\\page_client-
+reference-manifest.js',
+  dest: 'D:\\code-project\\lpapp\\.next\\standalone\\.next\\server\\app\\(marke
+ting)\\page_client-reference-manifest.js'
+}
+
+Route (app)
+Γöî Γùï /
+Γö£ Γùï /_not-found
+Γö£ Γùï /admin/permissions
+Γö£ Γùï /admin/users
+Γö£ Γùï /akademik
+Γö£ Γùï /akademik/kelas
+Γö£ ╞Æ /akademik/kelas/[classGroupId]
+Γö£ Γùï /akademik/kelas/manage
+Γö£ Γùï /akademik/santri
+Γö£ ╞Æ /akademik/santri/[id]
+Γö£ ╞Æ /akademik/santri/[id]/request
+Γö£ Γùï /akademik/santri/upload
+Γö£ ╞Æ /api/auth/[...nextauth]
+Γö£ ╞Æ /api/billing/payment-proofs/[proofId]/file
+Γö£ ╞Æ /api/billing/payments/[paymentId]/proof-file
+Γö£ ╞Æ /api/receipt/[paymentId]
+Γö£ ╞Æ /api/trpc/[trpc]
+Γö£ ╞Æ /api/upload
+Γö£ ╞Æ /api/upload-kk
+Γö£ ╞Æ /api/upload-logo
+Γö£ Γùï /billing
+Γö£ Γùï /billing/models
+Γö£ Γùï /billing/rekap
+Γö£ ╞Æ /billing/rekap/payments/[paymentId]/proof
+Γö£ ╞Æ /billing/rekap/proofs/[proofId]
+Γö£ Γùï /dashboard
+Γö£ Γùï /dashboard/santri-saya
+Γö£ ╞Æ /dashboard/santri-saya/[santriId]
+Γö£ Γùï /kamar
+Γö£ ╞Æ /kamar/[roomId]
+Γö£ Γùï /kelas
+Γö£ ╞Æ /kelas/[classGroupId]
+Γö£ Γùï /keuangan
+Γö£ ╞Æ /keuangan/activate/[billingModelId]
+Γö£ ╞Æ /keuangan/payments/[paymentId]/proof
+Γö£ ╞Æ /keuangan/proofs/[proofId]
+Γö£ Γùï /keuangan/santri
+Γö£ ╞Æ /keuangan/santri/[id]
+Γö£ ╞Æ /keuangan/santri/[id]/request
+Γö£ Γùï /landing
+Γö£ ╞Æ /link/[token]
+Γö£ ╞Æ /link/[token]/upload-proof
+Γö£ Γùï /login
+Γö£ Γùï /m-akademik
+Γö£ Γùï /m-akademik/kelas
+Γö£ ╞Æ /m-akademik/kelas/[classGroupId]
+Γö£ Γùï /m-akademik/kelas/manage
+Γö£ Γùï /m-akademik/santri
+Γö£ ╞Æ /m-akademik/santri/[id]
+Γö£ ╞Æ /m-akademik/santri/[id]/request
+Γö£ Γùï /m-akademik/santri/upload
+Γö£ Γùï /m-billing
+Γö£ Γùï /m-dashboard
+Γö£ Γùï /m-dashboard/santri-saya
+Γö£ ╞Æ /m-dashboard/santri-saya/[santriId]
+Γö£ Γùï /m-keuangan
+Γö£ ╞Æ /m-keuangan/activate/[billingModelId]
+Γö£ ╞Æ /m-keuangan/payments/[paymentId]/proof
+Γö£ ╞Æ /m-keuangan/proofs/[proofId]
+Γö£ Γùï /m-keuangan/santri
+Γö£ ╞Æ /m-keuangan/santri/[id]
+Γö£ ╞Æ /m-keuangan/santri/[id]/request
+Γö£ Γùï /m-master-data
+Γö£ ╞Æ /m-master-data/kamar/[roomId]
+Γö£ Γùï /m-master-data/kamar/manage
+Γö£ Γùï /m-master-data/santri
+Γö£ ╞Æ /m-master-data/santri/[id]
+Γö£ Γùï /m-master-data/santri/arsip
+Γö£ ╞Æ /m-master-data/santri/arsip/[id]
+Γö£ ╞Æ /m-master-data/santri/arsip/[id]/finance
+Γö£ Γùï /m-master-data/santri/manage
+Γö£ ╞Æ /m-master-data/santri/manage/[id]
+Γö£ ╞Æ /m-master-data/santri/manage/[id]/edit
+Γö£ ╞Æ /m-master-data/santri/manage/[id]/finance
+Γö£ ╞Æ /m-master-data/santri/manage/[id]/finance/pay/[invoiceId]
+Γö£ Γùï /m-master-data/santri/manage/new
+Γö£ Γùï /m-master-data/santri/permintaan
+Γö£ Γùï /m-master-data/santri/upload
+Γö£ Γùï /m-profile
+Γö£ Γùï /m-santri
+Γö£ ╞Æ /m-santri/[id]
+Γö£ Γùï /m-scan
+Γö£ Γùï /m-settings
+Γö£ Γùï /m-users
+Γö£ Γùï /m-users/invite-links
+Γö£ Γùï /m-users/page-access
+Γö£ Γùï /m-users/reset-password
+Γö£ Γùï /m-users/roles
+Γö£ Γùï /m-users/users
+Γö£ ╞Æ /m-users/users/[userId]
+Γö£ ╞Æ /master-data/kamar/[roomId]
+Γö£ Γùï /master-data/kamar/manage
+Γö£ Γùï /master-data/santri
+Γö£ ╞Æ /master-data/santri/[id]
+Γö£ Γùï /master-data/santri/arsip
+Γö£ ╞Æ /master-data/santri/arsip/[id]
+Γö£ ╞Æ /master-data/santri/arsip/[id]/finance
+Γö£ Γùï /master-data/santri/manage
+Γö£ ╞Æ /master-data/santri/manage/[id]
+Γö£ ╞Æ /master-data/santri/manage/[id]/edit
+Γö£ ╞Æ /master-data/santri/manage/[id]/finance
+Γö£ ╞Æ /master-data/santri/manage/[id]/finance/pay/[invoiceId]
+Γö£ Γùï /master-data/santri/manage/new
+Γö£ Γùï /master-data/santri/permintaan
+Γö£ Γùï /master-data/santri/upload
+Γö£ ╞Æ /register/[token]
+Γö£ ╞Æ /register/[token]/request-role
+Γö£ Γùï /santri
+Γö£ ╞Æ /santri/[id]
+Γö£ ╞Æ /santri/new
+Γö£ Γùï /settings
+Γö£ Γùï /test
+Γö£ Γùï /user-management/invite-links
+Γö£ Γùï /user-management/page-access
+Γö£ Γùï /user-management/reset-password
+Γö£ Γùï /user-management/roles
+Γö£ Γùï /user-management/users
+Γö£ ╞Æ /user-management/users/[userId]
+Γöö Γùï /users
+
+
+╞Æ Proxy (Middleware)
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+
