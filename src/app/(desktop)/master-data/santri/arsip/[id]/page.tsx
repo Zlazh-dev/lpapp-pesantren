@@ -141,6 +141,16 @@ export default function DetailAlumniPage({ params }: { params: Promise<{ id: str
                             <div className="fixed inset-0 z-30" onClick={() => setShowMenu(false)} />
                             <div className="absolute right-0 top-full mt-2 z-40 w-56 rounded-xl border border-slate-200 bg-white shadow-xl py-1.5 animate-fade-in">
                                 <Link
+                                    href={`/master-data/santri/manage/${id}?edit=true`}
+                                    className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                                    onClick={() => setShowMenu(false)}
+                                >
+                                    <svg className="w-4 h-4 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                    Edit Data
+                                </Link>
+                                <Link
                                     href={`/master-data/santri/arsip/${id}/finance`}
                                     className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
                                     onClick={() => setShowMenu(false)}
