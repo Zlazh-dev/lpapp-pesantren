@@ -30,8 +30,8 @@ const securityHeaders = [
       "form-action 'self'",
     ].join("; "),
   },
-  // Tell browsers to always use HTTPS (enable after HTTPS is configured)
-  // { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+  // HSTS: force HTTPS for 2 years (Cloudflare handles SSL)
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
 ];
 
 const nextConfig: NextConfig = {
@@ -46,12 +46,33 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        // Apply security headers to all routes
+        // Security headers to all routes
         source: "/(.*)",
         headers: securityHeaders,
       },
       {
-        // Serve KK PDF files inline for iframe preview
+        // Static assets — cache 1 year immutable (hash-named, safe)
+        source: "/_next/static/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+      {
+        // Public assets (images, icons, robots.txt)
+        source: "/(:path((?!api/).*)\.(?:ico|png|jpg|jpeg|svg|webp|woff2|woff|ttf))",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=3600" },
+        ],
+      },
+      {
+        // API routes — never cache
+        source: "/api/:path*",
+        headers: [
+          { key: "Cache-Control", value: "no-store, no-cache, must-revalidate" },
+        ],
+      },
+      {
+        // KK PDF inline preview
         source: "/uploads/kk/:file*",
         headers: [
           { key: "Content-Disposition", value: "inline" },
