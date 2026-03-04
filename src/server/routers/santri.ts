@@ -44,6 +44,7 @@ const santriListInputSchema = z.object({
     search: z.string().optional(),
     classGroupId: z.string().optional(),
     dormRoomId: z.number().optional(),
+    nisYearPrefix: z.string().max(2).optional(), // 2-digit year prefix, e.g. '24', '25'
     sortKey: z.enum(['fullName', 'nis', 'createdAt']).optional(),
     sortDir: z.enum(['asc', 'desc']).optional(),
     page: z.number().min(1).default(1),
@@ -53,7 +54,7 @@ const santriListInputSchema = z.object({
 type SantriListInput = z.infer<typeof santriListInputSchema>
 
 function buildSantriListWhere(input: SantriListInput, scopeWhere: Prisma.SantriWhereInput): Prisma.SantriWhereInput {
-    const { search, classGroupId, dormRoomId } = input ?? {}
+    const { search, classGroupId, dormRoomId, nisYearPrefix } = input ?? {}
 
     const andFilters: Prisma.SantriWhereInput[] = [
         { isActive: true },
@@ -70,6 +71,7 @@ function buildSantriListWhere(input: SantriListInput, scopeWhere: Prisma.SantriW
     }
     if (classGroupId) andFilters.push({ classGroupId })
     if (dormRoomId) andFilters.push({ dormRoomId })
+    if (nisYearPrefix) andFilters.push({ nis: { startsWith: nisYearPrefix } })
 
     return { AND: andFilters }
 }
@@ -707,6 +709,24 @@ export const santriRouter = router({
             }
 
             return { createdCount, updatedCount, failedRows }
+        }),
+
+    // Returns distinct 2-digit year prefixes from all active santri NIS
+    listNisYears: santriCentralizedProcedure
+        .query(async ({ ctx }) => {
+            const allNis = await ctx.prisma.santri.findMany({
+                where: { isActive: true, nis: { not: '' } },
+                select: { nis: true },
+                orderBy: { nis: 'asc' },
+            })
+            const yearsSet = new Set<string>()
+            for (const { nis } of allNis) {
+                if (nis && nis.length >= 2) {
+                    const prefix = nis.slice(0, 2)
+                    if (/^\d{2}$/.test(prefix)) yearsSet.add(prefix)
+                }
+            }
+            return Array.from(yearsSet).sort()
         }),
 
     generateNis: santriManageProcedure

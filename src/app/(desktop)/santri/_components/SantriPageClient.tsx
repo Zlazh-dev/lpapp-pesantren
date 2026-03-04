@@ -25,6 +25,7 @@ export default function SantriPageClient({ mode = 'scoped' }: { mode?: SantriPag
     const [page, setPage] = useState(1)
     const [classGroupFilter, setClassGroupFilter] = useState<string | undefined>()
     const [dormRoomFilter, setDormRoomFilter] = useState<number | undefined>()
+    const [nisYearFilter, setNisYearFilter] = useState<string | undefined>()
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
     const [showImport, setShowImport] = useState(false)
     const [deletingTarget, setDeletingTarget] = useState<any>(null)
@@ -43,12 +44,16 @@ export default function SantriPageClient({ mode = 'scoped' }: { mode?: SantriPag
     const { data: dormRooms } = trpc.dorm.room.list.useQuery(undefined, {
         enabled: mode === 'scoped',
     })
+    const { data: nisYears } = trpc.santri.listNisYears.useQuery(undefined, {
+        enabled: mode === 'centralized',
+    })
 
     const listInput = {
         search: debouncedSearch || undefined,
         classGroupId: classGroupFilter,
         dormRoomId: dormRoomFilter,
-        sortKey: 'fullName',
+        nisYearPrefix: nisYearFilter,
+        sortKey: 'nis' as const,
         sortDir,
         page,
         limit: 12,
@@ -131,6 +136,30 @@ export default function SantriPageClient({ mode = 'scoped' }: { mode?: SantriPag
 
             {/* Search + Filters */}
             <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
+                {/* NIS Tahun Quick Filter — centralized mode only */}
+                {mode === 'centralized' && nisYears && nisYears.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tahun Masuk:</span>
+                        <button
+                            onClick={() => { setNisYearFilter(undefined); setPage(1) }}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${!nisYearFilter
+                                    ? 'bg-teal-500 text-white border-teal-500 shadow-sm'
+                                    : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                                }`}>
+                            Semua
+                        </button>
+                        {nisYears.map((yr: string) => (
+                            <button key={yr}
+                                onClick={() => { setNisYearFilter(yr === nisYearFilter ? undefined : yr); setPage(1) }}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${nisYearFilter === yr
+                                        ? 'bg-teal-500 text-white border-teal-500 shadow-sm'
+                                        : 'bg-white text-slate-500 border-slate-200 hover:bg-teal-50 hover:text-teal-600 hover:border-teal-200'
+                                    }`}>
+                                20{yr}
+                            </button>
+                        ))}
+                    </div>
+                )}
                 <div className="flex flex-wrap gap-3">
                     <div className="relative flex-1 min-w-[240px]">
                         <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -161,7 +190,7 @@ export default function SantriPageClient({ mode = 'scoped' }: { mode?: SantriPag
                     <button onClick={() => setSortDir(d => d === 'asc' ? 'desc' : 'asc')}
                         className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm hover:bg-slate-50 transition-all flex items-center gap-1.5 text-slate-600">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" /></svg>
-                        {sortDir === 'asc' ? 'A → Z' : 'Z → A'}
+                        NIS {sortDir === 'asc' ? '↑' : '↓'}
                     </button>
                 </div>
                 {/* Active Filter Chips */}
