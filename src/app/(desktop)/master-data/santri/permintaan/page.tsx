@@ -104,11 +104,11 @@ export default function PermintaanPage() {
         search: search || undefined,
         page,
         limit: 20,
-    }, { refetchInterval: 60_000 })
+    }, { refetchInterval: 5_000 })
 
     const detailQ = trpc.santriRequest.getDetail.useQuery(selectedId!, {
         enabled: !!selectedId,
-        refetchInterval: 60_000,
+        refetchInterval: 5_000,
     })
 
     const markReadMut = trpc.santriRequest.markRead.useMutation()
@@ -128,18 +128,19 @@ export default function PermintaanPage() {
         },
     })
 
-    // Real-time SSE: append incoming messages immediately
+    // Real-time SSE: append incoming messages immediately + refresh both list and detail
     const handleNewMessage = useCallback((msg: any) => {
         setExtraMessages(prev => prev.some(m => m.id === msg.id) ? prev : [...prev, msg])
         listQ.refetch()
+        detailQ.refetch()
     }, [])
     const handleRead = useCallback(() => { setAllReadAt(new Date()) }, [])
 
     useChatStream({ requestId: selectedId, onMessage: handleNewMessage, onRead: handleRead, enabled: !!selectedId })
 
-    // Global SSE: refresh list when new requests arrive or anything updates
+    // Global SSE: refresh list (and detail if open) when any request updates
     useGlobalStream({
-        onEvent: useCallback(() => { listQ.refetch() }, []),
+        onEvent: useCallback(() => { listQ.refetch(); detailQ.refetch() }, []),
     })
 
     // When opening a request: reset extras and mark messages read
