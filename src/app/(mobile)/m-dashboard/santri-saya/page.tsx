@@ -43,7 +43,7 @@ export default function MobileSantriSayaPage() {
     const [replyText, setReplyText] = useState('')
     const chatRef = useRef<HTMLDivElement>(null)
 
-    const { data, isLoading } = trpc.santriRequest.listMyScope.useQuery({ search: debouncedSearch || undefined })
+    const { data, isLoading, error: scopeError } = trpc.santriRequest.listMyScope.useQuery({ search: debouncedSearch || undefined })
     const { data: myRequests, refetch: refetchRequests } = trpc.santriRequest.myRequests.useQuery(undefined, { refetchInterval: 15_000 })
     const detailQ = trpc.santriRequest.getDetail.useQuery(selectedId!, { enabled: !!selectedId, refetchInterval: 8_000 })
 
@@ -116,11 +116,17 @@ export default function MobileSantriSayaPage() {
 
                         {isLoading ? (
                             <div className="space-y-2">{[1, 2, 3, 4].map(i => <div key={i} className="h-16 bg-slate-100 animate-pulse rounded-xl" />)}</div>
-                        ) : data?.scopeType === 'NONE' ? (
+                        ) : scopeError ? (
+                            <div className="text-center py-12 bg-white rounded-2xl border border-slate-200">
+                                <p className="text-sm text-slate-500 font-medium">Gagal memuat data</p>
+                                <p className="text-xs text-slate-400 mt-1">{(scopeError as any)?.message ?? 'Coba refresh halaman'}</p>
+                            </div>
+                        ) : !data || data.scopeType === 'NONE' ? (
                             <div className="text-center py-12 bg-white rounded-2xl border border-slate-200">
                                 <p className="text-sm text-slate-500 font-medium">Belum ada penugasan</p>
+                                <p className="text-xs text-slate-400 mt-1">Hubungi admin untuk ditugaskan ke kelas atau kamar</p>
                             </div>
-                        ) : !data?.santri.length ? (
+                        ) : data.santri.length === 0 ? (
                             <div className="text-center py-10 bg-white rounded-2xl border border-slate-200">
                                 <p className="text-sm text-slate-400">Tidak ada santri ditemukan</p>
                             </div>

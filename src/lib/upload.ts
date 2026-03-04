@@ -31,13 +31,16 @@ export async function saveFileLocally(
     const { writeFile } = await import('fs/promises')
     await writeFile(filePath, buffer)
 
-    const url = `/uploads/${SUBFOLDERS[subfolder]}/${filename}`
+    // Use /api/uploads/... so the file is served via the API route.
+    // This is required because `output: standalone` does not serve runtime-written
+    // files from `public/uploads/` as static assets.
+    const url = `/api/uploads/${SUBFOLDERS[subfolder]}/${filename}`
     return { url, filename }
 }
 
 /**
  * Delete a locally-stored upload by its URL path.
- * Only deletes files under `/uploads/` to prevent path traversal.
+ * Handles both `/api/uploads/...` (new) and legacy `/uploads/...` paths.
  * Silently ignores missing files or non-local URLs.
  */
 export async function deleteLocalFile(urlOrPath: string | null | undefined): Promise<boolean> {
@@ -46,9 +49,14 @@ export async function deleteLocalFile(urlOrPath: string | null | undefined): Pro
     // Only handle local uploads
     if (!isLocalUpload(urlOrPath)) return false
 
-    // Sanitize: strip leading slash, resolve to absolute path
-    const relativePath = urlOrPath.replace(/^\//, '')
-    const absolutePath = path.join(process.cwd(), 'public', relativePath)
+    // Normalise: map `/api/uploads/photo/x.jpg` → `uploads/photo/x.jpg`
+    //            map `/uploads/photo/x.jpg`      → `uploads/photo/x.jpg`
+    const withoutLeadingSlash = urlOrPath.replace(/^\//, '')
+    const uploadRelative = withoutLeadingSlash.startsWith('api/uploads/')
+        ? withoutLeadingSlash.replace(/^api\/uploads\//, 'uploads/')
+        : withoutLeadingSlash // already `uploads/...`
+
+    const absolutePath = path.join(process.cwd(), 'public', uploadRelative)
 
     // Security: ensure resolved path is still under UPLOAD_ROOT
     const resolved = path.resolve(absolutePath)
@@ -67,10 +75,12 @@ export async function deleteLocalFile(urlOrPath: string | null | undefined): Pro
     }
 }
 
+
 /**
  * Check if a URL points to a locally-stored upload.
  */
 export function isLocalUpload(url: string | null | undefined): boolean {
     if (!url) return false
-    return url.startsWith('/uploads/')
+    // Accept both old `/uploads/` paths and new `/api/uploads/` paths
+    return url.startsWith('/api/uploads/') || url.startsWith('/uploads/')
 }

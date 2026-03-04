@@ -6,9 +6,17 @@ import Image from 'next/image'
 import { trpc } from '@/utils/trpc'
 import { formatDate, getGenderLabel } from '@/utils/format'
 
-export default function SantriSayaDetailPage({ params }: { params: Promise<{ santriId: string }> }) {
+export default function SantriSayaDetailPage({ params, backHref }: { params: Promise<{ santriId: string }>; backHref?: string }) {
     const { santriId } = use(params)
-    const { data: santri, isLoading, error } = trpc.santriRequest.getSantriDetail.useQuery(santriId)
+    // Guard: only fire the query if santriId looks like a real database ID (UUID or CUID).
+    // Prevents spurious errors when Next.js routes static path segments like "data"
+    // to this dynamic route during prefetch/navigation.
+    const STATIC_SEGMENTS = new Set(['data', 'permintaan', 'new', 'edit', 'create', 'list', 'arsip'])
+    const isValidId = santriId.length >= 10 && !STATIC_SEGMENTS.has(santriId)
+    const { data: santri, isLoading, error } = trpc.santriRequest.getSantriDetail.useQuery(
+        santriId,
+        { enabled: isValidId }
+    )
     const [showPhotoModal, setShowPhotoModal] = useState(false)
 
     if (isLoading) {
@@ -77,7 +85,7 @@ export default function SantriSayaDetailPage({ params }: { params: Promise<{ san
         <div className="max-w-5xl mx-auto space-y-6 animate-fade-in">
             {/* Header Bar */}
             <div className="flex items-center gap-3">
-                <Link href="/dashboard/santri-saya" className="p-2.5 rounded-xl border border-slate-200 bg-white text-slate-400 hover:text-teal-600 hover:border-teal-200 hover:shadow-sm transition-all">
+                <Link href={backHref ?? '/dashboard/santri-saya'} className="p-2.5 rounded-xl border border-slate-200 bg-white text-slate-400 hover:text-teal-600 hover:border-teal-200 hover:shadow-sm transition-all">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>

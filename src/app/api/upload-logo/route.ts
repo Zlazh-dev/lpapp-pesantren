@@ -19,10 +19,13 @@ if (hasCloudinary) {
     })
 }
 
-function uploadToCloudinary(buffer: Buffer): Promise<{ secure_url: string; public_id: string }> {
+function uploadToCloudinary(
+    buffer: Buffer,
+    folder: string
+): Promise<{ secure_url: string; public_id: string }> {
     return new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
-            { folder: 'pesantren/settings', resource_type: 'image' },
+            { folder, resource_type: 'image' },
             (error, result) => {
                 if (error) return reject(error)
                 resolve({ secure_url: result?.secure_url ?? '', public_id: result?.public_id ?? '' })
@@ -38,6 +41,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         if (!session?.user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
+
+        // ?type=sidebar (default) or ?type=document
+        const logoType = (req.nextUrl.searchParams.get('type') || 'sidebar') as 'sidebar' | 'document'
 
         const formData = await req.formData()
         const file = formData.get('file') as File
@@ -57,7 +63,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         const arrayBuffer = await file.arrayBuffer()
         let buffer = Buffer.from(new Uint8Array(arrayBuffer))
 
-        // For non-SVG images, process with sharp (resize to max 400px, keep aspect ratio, output PNG)
+        // For non-SVG images, process with sharp
         if (file.type !== 'image/svg+xml') {
             buffer = Buffer.from(await sharp(buffer)
                 .resize(400, 400, { fit: 'inside', withoutEnlargement: true })
@@ -65,11 +71,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
                 .toBuffer())
         }
 
+        const cloudinaryFolder = logoType === 'document'
+            ? 'pesantren/settings/document'
+            : 'pesantren/settings/sidebar'
+
         // Try Cloudinary first
         if (hasCloudinary) {
             try {
-                const result = await uploadToCloudinary(buffer)
-                return NextResponse.json({ url: result.secure_url, public_id: result.public_id })
+                const result = await uploadToCloudinary(buffer, cloudinaryFolder)
+                return NextResponse.json({ url: result.secure_url, public_id: result.public_id, type: logoType })
             } catch (cloudErr) {
                 console.warn('Cloudinary logo upload failed, falling back to local:', cloudErr)
             }
@@ -78,7 +88,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         // Fallback: local storage
         const ext = file.type === 'image/svg+xml' ? 'svg' : 'png'
         const { url, filename } = await saveFileLocally(buffer, 'logo', ext)
-        return NextResponse.json({ url, public_id: 'local_' + filename })
+        return NextResponse.json({ url, public_id: 'local_' + filename, type: logoType })
     } catch (error) {
         console.error('Logo upload error:', error)
         return NextResponse.json({ error: 'Gagal upload logo' }, { status: 500 })

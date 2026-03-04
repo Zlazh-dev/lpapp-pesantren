@@ -33,7 +33,7 @@ export default function DetailSantriPage({ params }: { params: Promise<{ id: str
     const printRef = useRef<HTMLDivElement>(null)
 
     const { data: santri, isLoading, error } = trpc.santri.getById.useQuery(id)
-    const { data: logoUrl } = trpc.settings.get.useQuery('logo_url')
+    const { data: logoUrl } = trpc.settings.get.useQuery('logo_document_url')
 
     const deleteMut = trpc.santri.delete.useMutation({
         onSuccess: () => {
