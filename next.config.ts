@@ -58,8 +58,8 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // Public assets (images, icons, robots.txt)
-        source: "/(:path((?!api/).*)\.(?:ico|png|jpg|jpeg|svg|webp|woff2|woff|ttf))",
+        // Public static assets — cache 1 day
+        source: "/:file(.*\.(?:ico|png|jpg|jpeg|svg|webp|woff2|woff|ttf))",
         headers: [
           { key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=3600" },
         ],
