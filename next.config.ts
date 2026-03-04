@@ -14,12 +14,11 @@ const securityHeaders = [
     value: "camera=(), microphone=(), geolocation=(), payment=()",
   },
   // Content Security Policy — restrict resource origins
-  // 'unsafe-inline' kept for Next.js inline styles; adjust as needed
   {
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // Next.js requires unsafe-eval for hot reload; tighten in prod if possible
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
       "img-src 'self' data: blob: https://res.cloudinary.com",
@@ -51,17 +50,10 @@ const nextConfig: NextConfig = {
         headers: securityHeaders,
       },
       {
-        // Static assets — cache 1 year immutable (hash-named, safe)
+        // Next.js static assets — cache 1 year immutable (content-hashed filenames)
         source: "/_next/static/:path*",
         headers: [
           { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
-        ],
-      },
-      {
-        // Public static assets — cache 1 day
-        source: "/:file(.*\.(?:ico|png|jpg|jpeg|svg|webp|woff2|woff|ttf))",
-        headers: [
-          { key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=3600" },
         ],
       },
       {
