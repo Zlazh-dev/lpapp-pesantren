@@ -319,13 +319,14 @@ export const santriRouter = router({
                 noKK: z.string().nullable().optional(),
                 educationLevel: z.string().nullable().optional(),
                 enrollmentDate: z.string().nullable().optional(),
+                deactivatedAt: z.string().nullable().optional(),
                 kkFileUrl: z.string().nullable().optional(),
                 kkFileKey: z.string().nullable().optional(),
                 address: addressSchema.optional(),
             })
         )
         .mutation(async ({ ctx, input }) => {
-            const { id, birthDate, enrollmentDate, address, dormRoomId, ...rest } = input
+            const { id, birthDate, enrollmentDate, deactivatedAt, address, dormRoomId, ...rest } = input
 
             // Fetch old file URLs before update (for auto-delete)
             const oldSantri = await ctx.prisma.santri.findUnique({
@@ -361,6 +362,7 @@ export const santriRouter = router({
                     ...(dormRoomId !== undefined && { dormRoomId }),
                     ...(birthDate !== undefined && { birthDate: birthDate ? new Date(birthDate) : null }),
                     ...(enrollmentDate !== undefined && { enrollmentDate: enrollmentDate ? new Date(enrollmentDate) : null }),
+                    ...(deactivatedAt !== undefined && { deactivatedAt: deactivatedAt ? new Date(deactivatedAt) : null }),
                     ...(address !== undefined && { address }),
                 },
             })

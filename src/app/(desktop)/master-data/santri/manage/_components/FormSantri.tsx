@@ -33,6 +33,7 @@ export type FormSantriValues = {
     nik: string
     noKK: string
     enrollmentDate: string
+    deactivatedAt: string
     educationLevel: string
     address: AddressValues
 }
@@ -65,6 +66,7 @@ const EMPTY_FORM: FormSantriValues = {
     nik: '',
     noKK: '',
     enrollmentDate: '',
+    deactivatedAt: '',
     educationLevel: '',
     address: { ...EMPTY_ADDRESS },
 }
@@ -210,6 +212,10 @@ export default function FormSantri({ mode, defaultValues, onSubmit, isSubmitting
                         placeholder="16 digit Nomor KK" maxLength={16} />
                     <FieldInput label="Tanggal Masuk" value={form.enrollmentDate} onChange={(v) => F('enrollmentDate', v)}
                         type="date" />
+                    {mode === 'edit' && (
+                        <FieldInput label="Tanggal Keluar" value={form.deactivatedAt} onChange={(v) => F('deactivatedAt', v)}
+                            type="date" />
+                    )}
                     <div>
                         <label className="block text-xs font-medium text-slate-500 mb-1">Jenjang Pendidikan</label>
                         <select

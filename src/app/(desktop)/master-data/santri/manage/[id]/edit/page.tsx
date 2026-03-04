@@ -46,6 +46,7 @@ export default function EditSantriPage({ params }: { params: Promise<{ id: strin
             nik: values.nik || null,
             noKK: values.noKK || null,
             enrollmentDate: values.enrollmentDate || null,
+            deactivatedAt: values.deactivatedAt || null,
             educationLevel: values.educationLevel || null,
             address: hasAddress ? values.address : undefined,
         })
@@ -103,6 +104,7 @@ export default function EditSantriPage({ params }: { params: Promise<{ id: strin
         nik: (santri as any).nik ?? '',
         noKK: (santri as any).noKK ?? '',
         enrollmentDate: (santri as any).enrollmentDate ? new Date((santri as any).enrollmentDate).toISOString().slice(0, 10) : '',
+        deactivatedAt: (santri as any).deactivatedAt ? new Date((santri as any).deactivatedAt).toISOString().slice(0, 10) : '',
         educationLevel: (santri as any).educationLevel ?? '',
         address: {
             jalan: addr.jalan ?? '',
