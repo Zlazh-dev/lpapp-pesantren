@@ -444,7 +444,7 @@ const PrintDataSantri = forwardRef<HTMLDivElement, Props>(({ santri, logoUrl }, 
                     <p>Desa Narukan RT 004 RW 002 Kec. Kragan Kab. Rembang</p>
                 </div>
                 <div className="right">
-                    مدرسة دوراسة القرآن والصلوة
+                    دراسة القرآن والصلوة
                 </div>
             </div>
         </div>
