@@ -353,7 +353,7 @@ const PrintDataSantri = forwardRef<HTMLDivElement, Props>(({ santri, logoUrl }, 
                 <div className="print-title">
                     <h2>Data Santri Pondok Pesantren Al-Qur&apos;an LP3iA</h2>
                     <p>Narukan-Kragan-Rembang-Jawa Tengah</p>
-                    <p>1446-1447 H / 2025-2026 M</p>
+                    <p>1446-1447 H / 2026-2026 M</p>
                 </div>
 
                 {/* Identitas Santri — full width */}
