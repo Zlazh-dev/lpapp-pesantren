@@ -110,8 +110,8 @@ const PrintDataSantri = forwardRef<HTMLDivElement, Props>(({ santri, logoUrl }, 
                     margin-bottom: 6px;
                 }
                 .print-header-logo {
-                    width: 72px;
-                    height: 72px;
+                    width: 100px;
+                    height: 100px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
