@@ -157,7 +157,7 @@ function ProgramCard({ label, count, total, pct, badgeColor, ringColor }: {
 /* ────────────────────────── Main Page ────────────────────────── */
 export default function DashboardPage() {
     const { data: session } = useSession()
-    const firstName = (session?.user?.name ?? 'Admin').split(' ')[0]
+    const firstName = ((session?.user as any)?.fullName ?? 'Admin').split(' ')[0]
 
     const [genderFilter, setGenderFilter] = useState<GenderFilter>('ALL')
 
