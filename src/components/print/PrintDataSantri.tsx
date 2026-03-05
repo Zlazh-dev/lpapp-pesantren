@@ -66,24 +66,31 @@ const PrintDataSantri = forwardRef<HTMLDivElement, Props>(({ santri, logoUrl }, 
                 .print-santri-document * { margin: 0; padding: 0; box-sizing: border-box; }
                 .print-santri-document {
                     width: 210mm;
-                    height: 297mm;
+                    min-height: 297mm;
                     margin: 0 auto;
                     font-family: 'Times New Roman', Times, serif;
                     color: #1a1a1a;
                     background: white;
-                    font-size: 9pt;
-                    line-height: 1.3;
+                    font-size: 12pt;
+                    line-height: 1.4;
                     display: flex;
                     flex-direction: column;
-                    overflow: hidden;
                 }
                 @media print {
+                    html, body {
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                    }
                     .print-santri-document {
+                        width: 100%;
+                        min-height: unset;
                         margin: 0;
                     }
                     @page {
                         size: A4;
-                        margin: 0;
+                        margin: 10mm 14mm 10mm 14mm;
                     }
                 }
                 .print-body {
@@ -91,7 +98,6 @@ const PrintDataSantri = forwardRef<HTMLDivElement, Props>(({ santri, logoUrl }, 
                     padding: 5mm 14mm 0;
                     display: flex;
                     flex-direction: column;
-                    overflow: hidden;
                 }
 
                 /* ── Header ── */
@@ -132,29 +138,29 @@ const PrintDataSantri = forwardRef<HTMLDivElement, Props>(({ santri, logoUrl }, 
                     text-align: center;
                 }
                 .print-header-text h1 {
-                    font-size: 14pt;
+                    font-size: 17pt;
                     font-weight: bold;
                     color: #2a7a4f;
                     letter-spacing: 0.5px;
                     text-transform: uppercase;
                 }
                 .print-header-text .subtitle {
-                    font-size: 8pt;
+                    font-size: 10pt;
                     color: #2a7a4f;
                     font-style: italic;
-                    margin: 1px 0;
+                    margin: 2px 0;
                 }
                 .print-header-text .location {
-                    font-size: 10pt;
+                    font-size: 12pt;
                     font-weight: bold;
                     color: #1a1a1a;
                     font-style: italic;
-                    margin: 1px 0;
+                    margin: 2px 0;
                 }
                 .print-header-text .contact {
-                    font-size: 7.5pt;
+                    font-size: 9pt;
                     color: #444;
-                    margin: 2px 0 0 0;
+                    margin: 3px 0 0 0;
                 }
 
                 /* ── Document Title ── */
@@ -163,23 +169,24 @@ const PrintDataSantri = forwardRef<HTMLDivElement, Props>(({ santri, logoUrl }, 
                     margin: 5px 0 7px;
                 }
                 .print-title h2 {
-                    font-size: 10.5pt;
+                    font-size: 13pt;
                     font-weight: bold;
                     text-decoration: underline;
-                    margin: 0 0 2px 0;
+                    margin: 0 0 3px 0;
                 }
                 .print-title p {
-                    font-size: 8.5pt;
-                    margin: 1px 0;
+                    font-size: 11pt;
+                    margin: 2px 0;
                 }
 
                 /* ── Section Label ── */
                 .print-section-label {
                     font-weight: bold;
-                    font-size: 9pt;
-                    margin: 6px 0 2px;
+                    font-size: 11pt;
+                    margin: 8px 0 3px;
                     padding-left: 6px;
                     border-left: 3px solid #2a7a4f;
+                    page-break-after: avoid;
                 }
 
                 /* ── Tables ── */
@@ -187,14 +194,15 @@ const PrintDataSantri = forwardRef<HTMLDivElement, Props>(({ santri, logoUrl }, 
                     width: 100%;
                     border-collapse: collapse;
                     margin-bottom: 2px;
+                    page-break-inside: avoid;
                 }
                 .print-table td {
-                    padding: 1.2px 6px;
+                    padding: 2px 6px;
                     vertical-align: top;
-                    font-size: 8.5pt;
+                    font-size: 11pt;
                 }
                 .print-table .label {
-                    width: 130px;
+                    width: 150px;
                     padding-left: 18px;
                     white-space: nowrap;
                 }
@@ -252,23 +260,21 @@ const PrintDataSantri = forwardRef<HTMLDivElement, Props>(({ santri, logoUrl }, 
 
                 /* ── Signature ── */
                 .print-signature-wrapper {
-                    flex: 1;
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: flex-end;
-                    padding-bottom: 10mm;
+                    margin-top: 16mm;
+                    padding-bottom: 4mm;
+                    page-break-inside: avoid;
                 }
                 .print-signature {
                     text-align: center;
                 }
                 .print-signature .date-line {
-                    font-size: 9pt;
-                    margin-bottom: 3px;
+                    font-size: 11pt;
+                    margin-bottom: 4px;
                 }
                 .print-signature .knowing {
-                    font-size: 9pt;
+                    font-size: 11pt;
                     font-weight: bold;
-                    margin-bottom: 30px;
+                    margin-bottom: 35px;
                 }
                 .print-signature-row {
                     display: flex;
@@ -280,16 +286,16 @@ const PrintDataSantri = forwardRef<HTMLDivElement, Props>(({ santri, logoUrl }, 
                     width: 180px;
                 }
                 .print-signature-col .role {
-                    font-size: 9pt;
-                    margin-bottom: 40px;
+                    font-size: 11pt;
+                    margin-bottom: 45px;
                 }
                 .print-signature-col .name {
-                    font-size: 9pt;
+                    font-size: 11pt;
                     font-weight: bold;
                     border-top: 1px solid #333;
                     padding-top: 3px;
                     display: inline-block;
-                    min-width: 140px;
+                    min-width: 150px;
                 }
 
                 /* ── Footer bar ── */
@@ -301,20 +307,23 @@ const PrintDataSantri = forwardRef<HTMLDivElement, Props>(({ santri, logoUrl }, 
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
+                    page-break-inside: avoid;
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
                 }
                 .print-footer-bar .left h3 {
-                    font-size: 11pt;
+                    font-size: 13pt;
                     font-weight: bold;
                     margin: 0;
                     color: #e5d9a0;
                 }
                 .print-footer-bar .left p {
-                    font-size: 7pt;
-                    margin: 1px 0 0;
+                    font-size: 9pt;
+                    margin: 2px 0 0;
                     color: #d4e8db;
                 }
                 .print-footer-bar .right {
-                    font-size: 11pt;
+                    font-size: 14pt;
                     color: #e5d9a0;
                     font-style: italic;
                     font-family: 'Times New Roman', serif;

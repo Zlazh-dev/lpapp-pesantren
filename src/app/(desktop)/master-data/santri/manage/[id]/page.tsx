@@ -274,11 +274,35 @@ export default function DetailSantriPage({ params }: { params: Promise<{ id: str
                                     setTimeout(() => {
                                         const el = printRef.current
                                         if (!el) return
+                                        const child = el.firstElementChild as HTMLElement | null
+                                        if (!child) return
                                         const w = window.open('', '_blank')
                                         if (!w) return
-                                        w.document.write(`<!DOCTYPE html><html><head><title>Cetak Data - ${santri.fullName}</title></head><body>${el.innerHTML}</body></html>`)
+                                        w.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cetak Data - ${santri.fullName}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      background: white;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    @page {
+      size: A4;
+      margin: 10mm 14mm 10mm 14mm;
+    }
+  </style>
+</head>
+<body>${child.outerHTML}</body>
+</html>`)
                                         w.document.close()
-                                        setTimeout(() => { w.print(); w.close() }, 400)
+                                        setTimeout(() => { w.print() }, 800)
                                     }, 100)
                                 }}
                                 className="flex items-center gap-3 w-full px-4 py-2.5 text-sm font-medium text-emerald-600 hover:bg-emerald-50 transition-colors"
