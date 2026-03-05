@@ -278,11 +278,13 @@ export default function DetailSantriPage({ params }: { params: Promise<{ id: str
                                         if (!child) return
                                         const w = window.open('', '_blank')
                                         if (!w) return
+                                        const baseUrl = window.location.origin
                                         w.document.write(`<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <base href="${baseUrl}" />
   <title>Cetak Data - ${santri.fullName}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -302,7 +304,7 @@ export default function DetailSantriPage({ params }: { params: Promise<{ id: str
 <body>${child.outerHTML}</body>
 </html>`)
                                         w.document.close()
-                                        setTimeout(() => { w.print() }, 800)
+                                        setTimeout(() => { w.print() }, 1200)
                                     }, 100)
                                 }}
                                 className="flex items-center gap-3 w-full px-4 py-2.5 text-sm font-medium text-emerald-600 hover:bg-emerald-50 transition-colors"
