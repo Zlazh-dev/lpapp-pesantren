@@ -148,28 +148,27 @@ export const santriRouter = router({
         .input(z.object({ gender: z.enum(['L', 'P']).optional() }).optional())
         .query(async ({ ctx, input }) => {
             const genderFilter = input?.gender
-            const rows = await ctx.prisma.$queryRaw<{ year_prefix: string; gender: string; cnt: bigint }[]>`
-                SELECT
-                    SUBSTRING(nis, 1, 2)  AS year_prefix,
-                    gender,
-                    COUNT(*)::bigint      AS cnt
-                FROM santri
-                WHERE
-                    LENGTH(nis) >= 2
-                    AND nis ~ '^[0-9]'
-                    ${genderFilter ? Prisma.sql`AND gender = ${genderFilter}` : Prisma.empty}
-                GROUP BY year_prefix, gender
-                ORDER BY year_prefix
-            `
+            // Fetch only what we need: NIS prefix + gender
+            const rows = await ctx.prisma.santri.findMany({
+                where: {
+                    isActive: true,
+                    nis: { not: '' },
+                    ...(genderFilter ? { gender: genderFilter } : {}),
+                },
+                select: { nis: true, gender: true },
+            })
 
-            // Build map year -> {putra, putri}
+            // Group by 2-digit year prefix from NIS
             const map = new Map<string, { putra: number; putri: number }>()
             for (const r of rows) {
-                const fullYear = `20${r.year_prefix}` // '18' → '2018'
+                if (!r.nis || r.nis.length < 2) continue
+                const prefix = r.nis.slice(0, 2)
+                if (!/^\d{2}$/.test(prefix)) continue
+                const fullYear = `20${prefix}` // '18' → '2018'
                 if (!map.has(fullYear)) map.set(fullYear, { putra: 0, putri: 0 })
                 const entry = map.get(fullYear)!
-                if (r.gender === 'L') entry.putra = Number(r.cnt)
-                else if (r.gender === 'P') entry.putri = Number(r.cnt)
+                if (r.gender === 'L') entry.putra++
+                else if (r.gender === 'P') entry.putri++
             }
 
             return Array.from(map.entries())
