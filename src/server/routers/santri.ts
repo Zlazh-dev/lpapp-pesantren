@@ -125,16 +125,56 @@ async function runSantriListQuery(params: {
 
 export const santriRouter = router({
     dashboardStats: protectedProcedure
-        .query(async ({ ctx }) => {
+        .input(z.object({ gender: z.enum(['L', 'P']).optional() }).optional())
+        .query(async ({ ctx, input }) => {
+            const genderFilter = input?.gender
+            const base: Prisma.SantriWhereInput = {
+                isActive: true,
+                ...(genderFilter ? { gender: genderFilter } : {}),
+            }
             const [total, putra, putri, mahadAly, tahfidz, formal] = await Promise.all([
-                ctx.prisma.santri.count({ where: { isActive: true } }),
-                ctx.prisma.santri.count({ where: { isActive: true, gender: 'L' } }),
-                ctx.prisma.santri.count({ where: { isActive: true, gender: 'P' } }),
-                ctx.prisma.santri.count({ where: { isActive: true, educationLevel: "Ma'had Aly" } }),
-                ctx.prisma.santri.count({ where: { isActive: true, educationLevel: 'Tahfidz' } }),
-                ctx.prisma.santri.count({ where: { isActive: true, educationLevel: 'Formal' } }),
+                ctx.prisma.santri.count({ where: base }),
+                ctx.prisma.santri.count({ where: { ...base, gender: 'L' } }),
+                ctx.prisma.santri.count({ where: { ...base, gender: 'P' } }),
+                ctx.prisma.santri.count({ where: { ...base, educationLevel: "Ma'had Aly" } }),
+                ctx.prisma.santri.count({ where: { ...base, educationLevel: 'Tahfidz' } }),
+                ctx.prisma.santri.count({ where: { ...base, educationLevel: 'Formal' } }),
             ])
             return { total, putra, putri, mahadAly, tahfidz, formal }
+        }),
+
+    // Real enrollment trend grouped by NIS year prefix (e.g. '24' → 2024) and gender
+    trendByYear: protectedProcedure
+        .input(z.object({ gender: z.enum(['L', 'P']).optional() }).optional())
+        .query(async ({ ctx, input }) => {
+            const genderFilter = input?.gender
+            const rows = await ctx.prisma.$queryRaw<{ year_prefix: string; gender: string; cnt: bigint }[]>`
+                SELECT
+                    SUBSTRING(nis, 1, 2)  AS year_prefix,
+                    gender,
+                    COUNT(*)::bigint      AS cnt
+                FROM santri
+                WHERE
+                    LENGTH(nis) >= 2
+                    AND nis ~ '^[0-9]'
+                    ${genderFilter ? Prisma.sql`AND gender = ${genderFilter}` : Prisma.empty}
+                GROUP BY year_prefix, gender
+                ORDER BY year_prefix
+            `
+
+            // Build map year -> {putra, putri}
+            const map = new Map<string, { putra: number; putri: number }>()
+            for (const r of rows) {
+                const fullYear = `20${r.year_prefix}` // '18' → '2018'
+                if (!map.has(fullYear)) map.set(fullYear, { putra: 0, putri: 0 })
+                const entry = map.get(fullYear)!
+                if (r.gender === 'L') entry.putra = Number(r.cnt)
+                else if (r.gender === 'P') entry.putri = Number(r.cnt)
+            }
+
+            return Array.from(map.entries())
+                .map(([year, v]) => ({ year, ...v }))
+                .sort((a, b) => a.year.localeCompare(b.year))
         }),
 
     // Accessible to ALL authenticated roles — used by the dashboard widget.
