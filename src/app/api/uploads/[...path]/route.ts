@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import path from 'path'
 import { readFile } from 'fs/promises'
 
-const UPLOAD_ROOT = path.resolve(path.join(process.cwd(), 'public', 'uploads'))
+// Must match the UPLOAD_ROOT in src/lib/upload.ts
+// If UPLOAD_DIR is set (production), files are stored there (outside app dir, survives rebuilds).
+// Otherwise fall back to public/uploads (local dev).
+const UPLOAD_ROOT = process.env.UPLOAD_DIR
+    ? path.resolve(process.env.UPLOAD_DIR)
+    : path.resolve(path.join(process.cwd(), 'public', 'uploads'))
 
 const CONTENT_TYPES: Record<string, string> = {
     jpg: 'image/jpeg',
