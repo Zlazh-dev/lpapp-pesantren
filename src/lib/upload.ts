@@ -3,7 +3,11 @@ import { mkdir, unlink, access } from 'fs/promises'
 import path from 'path'
 
 // ── Directories ──
-const UPLOAD_ROOT = path.join(process.cwd(), 'public', 'uploads')
+// If UPLOAD_DIR is set (production), store files there (outside app dir, survives rebuilds).
+// Otherwise fall back to public/uploads (local dev).
+const UPLOAD_ROOT = process.env.UPLOAD_DIR
+    ? path.resolve(process.env.UPLOAD_DIR)
+    : path.join(process.cwd(), 'public', 'uploads')
 
 const SUBFOLDERS = {
     photo: 'photo',
