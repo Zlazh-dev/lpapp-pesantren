@@ -42,5 +42,15 @@ next-env.d.ts
 
 /src/generated/prisma
 
-# Local uploads
+# Local uploads (kept outside project dir on server via UPLOAD_DIR env var)
 /public/uploads/
+
+# Logs
+/home/adminedas/logs/
+*.log
+
+# Temp diagnostic scripts (don't commit these)
+scripts/diagnose-logo.mjs
+scripts/fix-logo-urls.mjs
+scripts/check-santri-files.mjs
+scripts/scan-all-files.mjs
