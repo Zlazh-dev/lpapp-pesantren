@@ -40,6 +40,52 @@ function parseDate(val: string | undefined | null): Date | null {
     return null
 }
 
+/** Pad RT/RW number to 3 digits: "5" → "005", "05" → "005" */
+function padRtRw(val: string): string {
+    return val.replace(/\d+/g, n => n.padStart(3, '0'))
+}
+
+/**
+ * Build address JSON object.
+ * Priority: explicit RT/ RW/ Dusun columns.
+ * Fallback: parse from legacy combined rt_rw string (e.g. "RT 005 / RW 003").
+ * Supports variatif Indonesian inputs: "RT05RW08", "RT:005 RW:008 Dusun Krajan", etc.
+ */
+function buildAddress(row: {
+    provinsi?: string; kota?: string; kecamatan?: string; kelurahan?: string
+    jalan?: string; rt?: string; rw?: string; dusun?: string; rt_rw?: string
+}): Record<string, string> | null {
+    const addr: Record<string, string> = {}
+
+    if (row.provinsi) addr.provinsi = row.provinsi.trim()
+    if (row.kota) addr.kota = row.kota.trim()
+    if (row.kecamatan) addr.kecamatan = row.kecamatan.trim()
+    if (row.kelurahan) addr.kelurahan = row.kelurahan.trim()
+    if (row.jalan) addr.jalan = row.jalan.trim()
+    if (row.dusun) addr.dusun = row.dusun.trim()
+
+    // Priority 1: explicit RT / RW columns
+    if (row.rt || row.rw) {
+        if (row.rt) addr.rt = padRtRw(row.rt.trim())
+        if (row.rw) addr.rw = padRtRw(row.rw.trim())
+    } else if (row.rt_rw) {
+        // Priority 2: parse from combined RT/RW string
+        const s = row.rt_rw.trim()
+        const rtMatch = s.match(/RT\s*[:\/\-]?\s*0*(\d{1,3})/i)
+        const rwMatch = s.match(/RW\s*[:\/\-]?\s*0*(\d{1,3})/i)
+        const dusunMatch = s.match(/(?:DUSUN|DSN|KAMPUNG|KP|LINGKUNGAN|LK)\s*[:\/\-]?\s*([\w\s]+?)(?:\s+(?:RT|RW|$))/i)
+
+        if (rtMatch) addr.rt = rtMatch[1].padStart(3, '0')
+        if (rwMatch) addr.rw = rwMatch[1].padStart(3, '0')
+        if (dusunMatch && !addr.dusun) addr.dusun = dusunMatch[1].trim()
+
+        // If no RT/RW found but string exists, store as raw fallback
+        if (!rtMatch && !rwMatch) addr.rt_rw = s
+    }
+
+    return Object.keys(addr).length > 0 ? addr : null
+}
+
 const rowSchema = z.object({
     nis: z.string().min(1),
     fullName: z.string().min(1),
@@ -59,12 +105,16 @@ const rowSchema = z.object({
     waliName: z.string().optional(),
     waliPhone: z.string().optional(),
     description: z.string().optional(),
+    // Address fields — separate columns (priority)
     provinsi: z.string().optional(),
     kota: z.string().optional(),
     kecamatan: z.string().optional(),
     kelurahan: z.string().optional(),
     jalan: z.string().optional(),
-    rt_rw: z.string().optional(),
+    rt: z.string().optional(),       // separate RT column (new)
+    rw: z.string().optional(),       // separate RW column (new)
+    dusun: z.string().optional(),    // separate Dusun column (new)
+    rt_rw: z.string().optional(),    // legacy combined column (backward compat)
 })
 
 export const santriUploadRouter = router({
@@ -125,14 +175,9 @@ export const santriUploadRouter = router({
                     if (row.waliPhone) data.waliPhone = row.waliPhone.trim()
                     if (row.description) data.description = row.description.trim()
 
-                    const addr: Record<string, string> = {}
-                    if (row.provinsi) addr.provinsi = row.provinsi.trim()
-                    if (row.kota) addr.kota = row.kota.trim()
-                    if (row.kecamatan) addr.kecamatan = row.kecamatan.trim()
-                    if (row.kelurahan) addr.kelurahan = row.kelurahan.trim()
-                    if (row.jalan) addr.jalan = row.jalan.trim()
-                    if (row.rt_rw) addr.rt_rw = row.rt_rw.trim()
-                    if (Object.keys(addr).length > 0) data.address = addr
+                    // Build address JSON (handles separate RT/RW columns + legacy combined string)
+                    const addr = buildAddress(row)
+                    if (addr) data.address = addr
 
                     const existing = await ctx.prisma.santri.findUnique({
                         where: { nis: row.nis.trim() },

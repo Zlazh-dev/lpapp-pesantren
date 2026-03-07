@@ -30,8 +30,11 @@ const TEMPLATE_COLUMNS = [
     { header: 'Kecamatan', key: 'kecamatan', required: false },
     { header: 'Kelurahan', key: 'kelurahan', required: false },
     { header: 'Jalan', key: 'jalan', required: false },
-    { header: 'RT/RW', key: 'rt_rw', required: false },
+    { header: 'Dusun (opsional)', key: 'dusun', required: false },
+    { header: 'RT', key: 'rt', required: false },
+    { header: 'RW', key: 'rw', required: false },
 ]
+
 
 
 export default function UploadSantriPage() {
@@ -56,7 +59,7 @@ export default function UploadSantriPage() {
                 '01/07/2025', '', // Tanggal Keluar kosong = santri aktif
                 'SMP', 'Bapak Ahmad', 'Ibu Siti', '08111111111', '08222222222',
                 '', '', '', 'Jawa Timur', 'Surabaya', 'Tegalsari', 'Kedungdoro',
-                'Jl. Mawar No. 5', '001/002',
+                'Jl. Mawar No. 5', 'Krajan', '005', '003',
             ],
         ])
         // Style header row bold + column widths
@@ -107,6 +110,11 @@ export default function UploadSantriPage() {
                 headerMap['tgl lahir'] = 'birthDate'
                 headerMap['tanggal masuk'] = 'enrollmentDate'
                 headerMap['tgl masuk'] = 'enrollmentDate'
+                // RT/RW backward compat
+                headerMap['rt/rw'] = 'rt_rw'
+                headerMap['rtrw'] = 'rt_rw'
+                headerMap['rt rw'] = 'rt_rw'
+                headerMap['dusun (opsional)'] = 'dusun'
 
 
                 const rows = jsonData.map((row: any) => {
@@ -184,7 +192,7 @@ export default function UploadSantriPage() {
                         <p className="text-sm text-slate-500 mt-1">Download template Excel lalu isi data santri. Kolom <strong>NIS</strong> dan <strong>Nama Lengkap</strong> wajib, kolom lainnya opsional.</p>
                         {/* Format instructions */}
                         <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-xl space-y-1">
-                            <p className="text-xs font-semibold text-amber-700">⚠️ Ketentuan Format:</p>
+                            <p className="text-xs font-semibold text-amber-700">Ketentuan Format:</p>
                             <ul className="text-xs text-amber-700 space-y-0.5 list-disc list-inside">
                                 <li><strong>Tanggal Lahir & Tanggal Masuk</strong>: format <code className="bg-amber-100 px-1 rounded">DD/MM/YYYY</code> (contoh: <code className="bg-amber-100 px-1 rounded">15/06/2008</code>)</li>
                                 <li><strong>Tanggal Keluar</strong>: isi jika santri sudah lulus/keluar → akan otomatis ditandai sebagai <strong>alumni</strong>. Kosongkan jika masih aktif.</li>

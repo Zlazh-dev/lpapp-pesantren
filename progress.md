@@ -68,3 +68,14 @@ Status: Partial (install selesai, perlu konfigurasi gdrive manual)
 - Test manual: BERHASIL (23:06 WIB), PM2 2 instance reload OK
 - Log: /home/adminedas/logs/deploy.log
 Status: Selesai
+
+---
+[2026-03-08 06:13 WIB] - Fix Bug Upload Santri: Tanggal Format & Kolom Keluar
+
+- parseDate helper: support DD/MM/YYYY dan YYYY-MM-DD, set jam 12:00 hindari TZ shift
+- Kolom baru 'Tanggal Keluar' di template: jika diisi ? isActive: false (alumni otomatis)
+- Error message informatif per baris (contoh: Baris 5: Format tanggal lahir tidak valid)
+- Template Excel: header DD/MM/YYYY + sample baris + lebar kolom optimal
+- UI: instruksi format amber box + preview table dengan Tgl Keluar alumni badge
+- TypeScript: 0 error
+Status: Selesai
