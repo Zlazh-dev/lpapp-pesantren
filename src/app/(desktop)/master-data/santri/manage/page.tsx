@@ -21,6 +21,7 @@ export default function ManajemenSantriPage() {
     const [showFilterPanel, setShowFilterPanel] = useState(false)
     const [expandedFilter, setExpandedFilter] = useState<string | null>(null)
     const [showKebab, setShowKebab] = useState(false)
+    const [isExporting, setIsExporting] = useState(false)
     const filterRef = useRef<HTMLDivElement>(null)
     const kebabRef = useRef<HTMLDivElement>(null)
 
@@ -70,6 +71,19 @@ export default function ManajemenSantriPage() {
         onSuccess: () => { setDeleteTarget(null); utils.santri.listCentralized.invalidate() },
     })
 
+    const exportQuery = trpc.santri.exportFull.useQuery(
+        {
+            search: debouncedSearch || undefined,
+            classGroupId: filterClass || undefined,
+            dormRoomId: filterRoom ? Number(filterRoom) : undefined,
+            nisYearPrefix: filterNisYear || undefined,
+            gender: (filterGender as 'L' | 'P') || undefined,
+            sortKey: 'nis',
+            sortDir: 'asc',
+        },
+        { enabled: false, staleTime: 0 }
+    )
+
     const { data, isLoading, error } = listQuery
     const activeFilterCount = (filterRoom ? 1 : 0) + (filterClass ? 1 : 0) + (filterGender ? 1 : 0)
     const activeRoomLabel = filterRoom ? (dormRooms ?? []).find((r: any) => String(r.id) === filterRoom)?.name ?? 'Kamar' : ''
@@ -110,35 +124,70 @@ export default function ManajemenSantriPage() {
                             </button>
                             {showKebab && (
                                 <div className="absolute right-0 top-full mt-1 z-50 w-48 rounded-lg border border-gray-200 bg-white shadow-lg overflow-hidden animate-fade-in">
-                                    <button onClick={() => {
-                                        const items = data?.data ?? []
-                                        const rows = items.map((s: any) => {
-                                            const addr = s.address || {}
-                                            return {
-                                                'NIS': s.nis, 'Nama Lengkap': s.fullName, 'Gender': s.gender,
-                                                'Tanggal Lahir': s.birthDate ? new Date(s.birthDate).toLocaleDateString('id-ID') : '',
-                                                'Tempat Lahir': s.birthPlace || '', 'No HP': s.phone || '',
-                                                'NIK': s.nik || '', 'No KK': s.noKK || '',
-                                                'Tanggal Masuk': s.enrollmentDate ? new Date(s.enrollmentDate).toLocaleDateString('id-ID') : '',
-                                                'Jenjang Pendidikan': s.educationLevel || '',
-                                                'Nama Ayah': s.fatherName || '', 'Nama Ibu': s.motherName || '',
-                                                'No HP Ayah': s.fatherPhone || '', 'No HP Ibu': s.motherPhone || '',
-                                                'Nama Wali': s.waliName || '', 'No HP Wali': s.waliPhone || '',
-                                                'Deskripsi Wali Santri': s.description || '',
-                                                'Provinsi': addr.provinsi || '', 'Kota/Kabupaten': addr.kota || '',
-                                                'Kecamatan': addr.kecamatan || '', 'Kelurahan': addr.kelurahan || '',
-                                                'Jalan': addr.jalan || '', 'RT/RW': addr.rt_rw || '',
-                                                'Kamar': s.dormRoom?.name || '', 'Kelas': s.classGroup?.name || '',
-                                            }
-                                        })
-                                        const ws = XLSX.utils.json_to_sheet(rows)
-                                        const wb = XLSX.utils.book_new()
-                                        XLSX.utils.book_append_sheet(wb, ws, 'Data Santri')
-                                        XLSX.writeFile(wb, 'data_santri_pusat.xlsx')
+                                    <button onClick={async () => {
+                                        setIsExporting(true)
                                         setShowKebab(false)
-                                    }} className="w-full flex items-center gap-3 px-3 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition">
-                                        <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                                        Export Excel
+                                        try {
+                                            const { data: fullData } = await exportQuery.refetch()
+                                            if (!fullData || fullData.length === 0) {
+                                                alert('Tidak ada data untuk diekspor')
+                                                return
+                                            }
+                                            const rows = fullData.map((s: any) => {
+                                                const addr = (s.address as Record<string, string>) || {}
+                                                return {
+                                                    'NIS': s.nis,
+                                                    'Nama Lengkap': s.fullName,
+                                                    'Gender': s.gender,
+                                                    'Tanggal Lahir': s.birthDate ? new Date(s.birthDate).toLocaleDateString('id-ID') : '',
+                                                    'Tempat Lahir': s.birthPlace || '',
+                                                    'No HP': s.phone || '',
+                                                    'NIK': s.nik || '',
+                                                    'No KK': s.noKK || '',
+                                                    'Tanggal Masuk': s.enrollmentDate ? new Date(s.enrollmentDate).toLocaleDateString('id-ID') : '',
+                                                    'Jenjang Pendidikan': s.educationLevel || '',
+                                                    'Nama Ayah': s.fatherName || '',
+                                                    'Nama Ibu': s.motherName || '',
+                                                    'No HP Ayah': s.fatherPhone || '',
+                                                    'No HP Ibu': s.motherPhone || '',
+                                                    'Nama Wali': s.waliName || '',
+                                                    'No HP Wali': s.waliPhone || '',
+                                                    'Deskripsi Wali Santri': s.description || '',
+                                                    'Provinsi': addr.provinsi || '',
+                                                    'Kota/Kabupaten': addr.kota || '',
+                                                    'Kecamatan': addr.kecamatan || '',
+                                                    'Kelurahan': addr.kelurahan || '',
+                                                    'Jalan': addr.jalan || '',
+                                                    'RT/RW': addr.rt_rw || '',
+                                                    'Kelas': s.classGroup?.name || '',
+                                                    'Jenjang': s.classGroup?.grade?.level?.name || '',
+                                                    'Kamar': s.dormRoom?.name || '',
+                                                    'Gedung': s.dormRoom?.floor?.building?.name || '',
+                                                }
+                                            })
+                                            const ws = XLSX.utils.json_to_sheet(rows)
+                                            const wb = XLSX.utils.book_new()
+                                            XLSX.utils.book_append_sheet(wb, ws, 'Data Santri')
+                                            XLSX.writeFile(wb, `data_santri_${new Date().toISOString().slice(0, 10)}.xlsx`)
+                                        } catch (err) {
+                                            console.error('Export failed:', err)
+                                            alert('Gagal ekspor data. Coba lagi.')
+                                        } finally {
+                                            setIsExporting(false)
+                                        }
+                                    }} disabled={isExporting} className="w-full flex items-center gap-3 px-3 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition disabled:opacity-60 disabled:cursor-not-allowed">
+                                        {isExporting ? (
+                                            <>
+                                                <svg className="w-3.5 h-3.5 text-gray-400 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
+                                                Mengekspor...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                                Export Excel
+                                                {data?.total ? <span className="ml-auto text-[10px] text-gray-400 font-normal">({data.total})</span> : null}
+                                            </>
+                                        )}
                                     </button>
                                     <button onClick={() => { router.push('/master-data/santri/upload'); setShowKebab(false) }} className="w-full flex items-center gap-3 px-3 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition border-t border-gray-100">
                                         <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
@@ -160,8 +209,8 @@ export default function ManajemenSantriPage() {
                         <button
                             onClick={() => { setFilterNisYear(''); setPage(1) }}
                             className={`px-2.5 py-1 rounded text-[11px] font-semibold transition border ${!filterNisYear
-                                    ? 'bg-emerald-600 text-white border-emerald-600'
-                                    : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
+                                ? 'bg-emerald-600 text-white border-emerald-600'
+                                : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
                                 }`}>
                             Semua
                         </button>
@@ -169,8 +218,8 @@ export default function ManajemenSantriPage() {
                             <button key={yr}
                                 onClick={() => { setFilterNisYear(yr === filterNisYear ? '' : yr); setPage(1) }}
                                 className={`px-2.5 py-1 rounded text-[11px] font-semibold transition border ${filterNisYear === yr
-                                        ? 'bg-emerald-600 text-white border-emerald-600'
-                                        : 'bg-white text-gray-500 border-gray-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300'
+                                    ? 'bg-emerald-600 text-white border-emerald-600'
+                                    : 'bg-white text-gray-500 border-gray-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300'
                                     }`}>
                                 20{yr}
                             </button>

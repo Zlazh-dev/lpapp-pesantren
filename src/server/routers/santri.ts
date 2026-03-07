@@ -225,6 +225,52 @@ export const santriRouter = router({
             return runSantriListQuery({ ctx, input, scopeWhere: {} })
         }),
 
+    // Export full (no pagination) — used by Excel export button
+    exportFull: santriCentralizedProcedure
+        .input(z.object({
+            search: z.string().optional(),
+            classGroupId: z.string().optional(),
+            dormRoomId: z.number().optional(),
+            nisYearPrefix: z.string().max(2).optional(),
+            gender: z.enum(['L', 'P']).optional(),
+            sortKey: z.enum(['fullName', 'nis', 'createdAt']).optional(),
+            sortDir: z.enum(['asc', 'desc']).optional(),
+        }).optional())
+        .query(async ({ ctx, input }) => {
+            const where = buildSantriListWhere(input as SantriListInput, {})
+            const genderFilter = input?.gender
+            const finalWhere: Prisma.SantriWhereInput = genderFilter
+                ? { AND: [where, { gender: genderFilter }] }
+                : where
+            const orderBy = input?.sortKey
+                ? { [input.sortKey]: input.sortDir ?? 'asc' }
+                : { nis: 'asc' as const }
+            return ctx.prisma.santri.findMany({
+                where: finalWhere,
+                orderBy,
+                select: {
+                    id: true, nis: true, fullName: true, gender: true,
+                    birthDate: true, birthPlace: true, phone: true,
+                    nik: true, noKK: true, enrollmentDate: true,
+                    educationLevel: true, fatherName: true, motherName: true,
+                    fatherPhone: true, motherPhone: true, waliName: true,
+                    waliPhone: true, description: true, address: true,
+                    classGroup: {
+                        select: {
+                            name: true,
+                            grade: { select: { level: { select: { name: true } } } },
+                        },
+                    },
+                    dormRoom: {
+                        select: {
+                            name: true,
+                            floor: { select: { building: { select: { name: true } } } },
+                        },
+                    },
+                },
+            })
+        }),
+
     // Backward compatible endpoint (defaults to scoped behavior).
     list: santriViewProcedure
         .input(santriListInputSchema)
