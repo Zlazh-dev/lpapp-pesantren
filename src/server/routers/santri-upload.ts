@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { router, protectedProcedure, pageProtectedProcedure, hasRole } from '../trpc'
+import { router, protectedProcedure, hasRole } from '../trpc'
 import { TRPCError } from '@trpc/server'
 
 const uploadProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -13,6 +13,33 @@ const uploadProcedure = protectedProcedure.use(({ ctx, next }) => {
     return next({ ctx })
 })
 
+/**
+ * Parse date string supporting DD/MM/YYYY (Indonesia) and YYYY-MM-DD (ISO).
+ * Uses local Date constructor at noon to avoid timezone shifting the date.
+ */
+function parseDate(val: string | undefined | null): Date | null {
+    if (!val || val.trim() === '') return null
+    const s = val.trim()
+
+    // DD/MM/YYYY or DD-MM-YYYY — Indonesian format
+    const dmyMatch = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/)
+    if (dmyMatch) {
+        const [, dd, mm, yyyy] = dmyMatch
+        const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd), 12, 0, 0)
+        return isNaN(d.getTime()) ? null : d
+    }
+
+    // YYYY-MM-DD or YYYY/MM/DD — ISO format (set noon to avoid TZ shift)
+    const isoMatch = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/)
+    if (isoMatch) {
+        const [, yyyy, mm, dd] = isoMatch
+        const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd), 12, 0, 0)
+        return isNaN(d.getTime()) ? null : d
+    }
+
+    return null
+}
+
 const rowSchema = z.object({
     nis: z.string().min(1),
     fullName: z.string().min(1),
@@ -23,6 +50,7 @@ const rowSchema = z.object({
     nik: z.string().optional(),
     noKK: z.string().optional(),
     enrollmentDate: z.string().optional(),
+    deactivatedAt: z.string().optional(),   // Tanggal Keluar → alumni otomatis
     educationLevel: z.string().optional(),
     fatherName: z.string().optional(),
     motherName: z.string().optional(),
@@ -52,25 +80,42 @@ export const santriUploadRouter = router({
             for (let i = 0; i < input.rows.length; i++) {
                 const row = input.rows[i]
                 try {
-                    // Build data object, only include non-empty fields
                     const data: Record<string, any> = {
                         fullName: row.fullName.trim(),
                     }
+
                     if (row.gender && (row.gender === 'L' || row.gender === 'P')) {
                         data.gender = row.gender
                     }
-                    if (row.birthDate) {
-                        const d = new Date(row.birthDate)
-                        if (!isNaN(d.getTime())) data.birthDate = d
+
+                    const birthDate = parseDate(row.birthDate)
+                    if (birthDate) {
+                        data.birthDate = birthDate
+                    } else if (row.birthDate?.trim()) {
+                        throw new Error(`Format tanggal lahir tidak valid: "${row.birthDate}". Gunakan DD/MM/YYYY`)
                     }
+
                     if (row.birthPlace) data.birthPlace = row.birthPlace.trim()
                     if (row.phone) data.phone = row.phone.trim()
                     if (row.nik) data.nik = row.nik.trim()
                     if (row.noKK) data.noKK = row.noKK.trim()
-                    if (row.enrollmentDate) {
-                        const ed = new Date(row.enrollmentDate)
-                        if (!isNaN(ed.getTime())) data.enrollmentDate = ed
+
+                    const enrollmentDate = parseDate(row.enrollmentDate)
+                    if (enrollmentDate) {
+                        data.enrollmentDate = enrollmentDate
+                    } else if (row.enrollmentDate?.trim()) {
+                        throw new Error(`Format tanggal masuk tidak valid: "${row.enrollmentDate}". Gunakan DD/MM/YYYY`)
                     }
+
+                    // Tanggal Keluar → alumni otomatis (isActive: false)
+                    const deactivatedAt = parseDate(row.deactivatedAt)
+                    if (deactivatedAt) {
+                        data.deactivatedAt = deactivatedAt
+                        data.isActive = false
+                    } else if (row.deactivatedAt?.trim()) {
+                        throw new Error(`Format tanggal keluar tidak valid: "${row.deactivatedAt}". Gunakan DD/MM/YYYY`)
+                    }
+
                     if (row.educationLevel) data.educationLevel = row.educationLevel.trim()
                     if (row.fatherName) data.fatherName = row.fatherName.trim()
                     if (row.motherName) data.motherName = row.motherName.trim()
@@ -80,7 +125,6 @@ export const santriUploadRouter = router({
                     if (row.waliPhone) data.waliPhone = row.waliPhone.trim()
                     if (row.description) data.description = row.description.trim()
 
-                    // Build address JSON
                     const addr: Record<string, string> = {}
                     if (row.provinsi) addr.provinsi = row.provinsi.trim()
                     if (row.kota) addr.kota = row.kota.trim()
@@ -113,9 +157,9 @@ export const santriUploadRouter = router({
                     }
                 } catch (e: any) {
                     errors.push({
-                        row: i + 2, // +2 because row 1 is header, i is 0-indexed
+                        row: i + 2,
                         nis: row.nis,
-                        message: e.message?.substring(0, 100) || 'Unknown error',
+                        message: e.message?.substring(0, 150) || 'Unknown error',
                     })
                 }
             }

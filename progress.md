@@ -51,3 +51,20 @@ Status: Selesai
 - CATATAN: rclone config (Google Drive auth) belum dikonfigurasi
   Perlu user jalankan manual: rclone config -> remote name: gdrive
 Status: Partial (install selesai, perlu konfigurasi gdrive manual)
+
+---
+[2026-03-07 23:06 WIB] - Auto-Deploy Sukses
+
+- Commit: 94c624b
+- Pesan: Fix bug export santri Excel: exportFull procedure tanpa pagination
+- Build: OK, PM2 reload OK
+- Status: Live
+
+---
+[2026-03-08 05:58 WIB] - Setup Auto-Deploy Workflow
+
+- Script: deploy-auto.sh (git pull master + npm ci + prisma migrate + build + pm2 reload)
+- Trigger: cron setiap 5 menit cek .trigger-deploy file
+- Test manual: BERHASIL (23:06 WIB), PM2 2 instance reload OK
+- Log: /home/adminedas/logs/deploy.log
+Status: Selesai
