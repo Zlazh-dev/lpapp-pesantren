@@ -79,3 +79,14 @@ Status: Selesai
 - UI: instruksi format amber box + preview table dengan Tgl Keluar alumni badge
 - TypeScript: 0 error
 Status: Selesai
+
+---
+[2026-03-08 06:38 WIB] - Fix Upload Santri: RT/RW Parsing di Alamat JSON
+
+- buildAddress() helper: kolom RT/RW/Dusun terpisah (priority) + regex fallback dari rt_rw string
+- Regex support gaya input variatif: 'RT 005/RW 003', 'RT05RW08', 'Dusun Krajan', dll
+- RT/RW di-pad ke 3 digit: '5' -> '005', backward compat rt_rw string disimpan jika tidak terparse
+- Template Excel: ganti RT/RW gabungan jadi 3 kolom: Dusun (opsional), RT, RW
+- Sample baris: Krajan/005/003. Header aliases: rt/rw, rtrw, dusun (opsional)
+- TypeScript: 0 error
+Status: Selesai

@@ -479,6 +479,12 @@ export default function DetailSantriPage({ params }: { params: Promise<{ id: str
                             <Field label="No. KK" value={(santri as any).noKK} mono />
                             <Field label="Tanggal Masuk" value={(santri as any).enrollmentDate ? formatDate((santri as any).enrollmentDate) : null} />
                             <Field label="Jenjang Pendidikan" value={(santri as any).educationLevel} />
+                            {(santri as any).deactivatedAt && (
+                                <div className="md:col-span-2 flex items-center gap-3 px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-200 text-gray-600 text-xs font-semibold">🎓 Alumni</span>
+                                    <span className="text-sm text-slate-600">Tanggal Keluar: <strong>{formatDate((santri as any).deactivatedAt)}</strong></span>
+                                </div>
+                            )}
                         </dl>
                     </div>
 
@@ -501,7 +507,19 @@ export default function DetailSantriPage({ params }: { params: Promise<{ id: str
                                         <div className="md:col-span-2">
                                             <Field label="Jalan" value={addr.jalan} />
                                         </div>
-                                        <Field label="RT/RW" value={addr.rt_rw} />
+                                        {/* RT/RW: priority kolom terpisah, fallback rt_rw lama */}
+                                        <Field
+                                            label="RT / RW"
+                                            value={
+                                                (addr.rt || addr.rw)
+                                                    ? `RT ${addr.rt?.padStart(3, '0') ?? '-'} / RW ${addr.rw?.padStart(3, '0') ?? '-'}${addr.dusun ? ` — Dusun ${addr.dusun}` : ''}`
+                                                    : (addr.rt_rw || null)
+                                            }
+                                        />
+                                        {/* Dusun sebagai field terpisah jika ada dan tidak di-inline RT/RW */}
+                                        {addr.dusun && !addr.rt && !addr.rw && (
+                                            <Field label="Dusun" value={addr.dusun} />
+                                        )}
                                         <Field label="Kelurahan / Desa" value={addr.kelurahan} />
                                         <Field label="Kecamatan" value={addr.kecamatan} />
                                         <Field label="Kota / Kabupaten" value={addr.kota} />
