@@ -8,6 +8,9 @@ import { useRouter } from 'next/navigation'
 import { trpc } from '@/utils/trpc'
 import { formatDate, getGenderLabel } from '@/utils/format'
 import PrintDataSantri from '@/components/print/PrintDataSantri'
+import { DataPribadiSection } from './_components/DataPribadiSection'
+import { AlamatSection } from './_components/AlamatSection'
+import { OrangTuaSection } from './_components/OrangTuaSection'
 import QRCode from 'qrcode'
 
 export default function DetailSantriPage({ params }: { params: Promise<{ id: string }> }) {
@@ -415,24 +418,7 @@ export default function DetailSantriPage({ params }: { params: Promise<{ id: str
                     </div>
 
                     {/* Data Orang Tua - below photo */}
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                        <div className="flex items-center gap-2.5 mb-4 pb-3 border-b border-slate-100">
-                            <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
-                                <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                </svg>
-                            </div>
-                            <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wide">Data Orang Tua / Wali</h3>
-                        </div>
-                        <dl className="space-y-3">
-                            <Field label="Nama Ayah" value={santri.fatherName} />
-                            <Field label="Nama Ibu" value={santri.motherName} />
-                            <Field label="No. HP Ayah" value={santri.fatherPhone} />
-                            <Field label="No. HP Ibu" value={santri.motherPhone} />
-                            <Field label="Nama Wali" value={(santri as any).waliName} />
-                            <Field label="No. HP Wali" value={(santri as any).waliPhone} />
-                        </dl>
-                    </div>
+                    <OrangTuaSection santri={santri} />
 
                     {/* Deskripsi */}
                     {(santri as any).description && (
@@ -452,85 +438,18 @@ export default function DetailSantriPage({ params }: { params: Promise<{ id: str
 
                 {/* ── RIGHT: Data Cards ── */}
                 <div className="space-y-6">
-                    {/* Data Pribadi */}
-                    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                        <div className="flex items-center gap-2.5 mb-5 pb-4 border-b border-slate-100">
-                            <div className="w-9 h-9 rounded-xl bg-teal-50 flex items-center justify-center">
-                                <svg className="w-4.5 h-4.5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                            </div>
-                            <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Data Pribadi</h3>
-                        </div>
-                        <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
-                            <Field label="Nama Lengkap" value={santri.fullName} />
-                            <Field label="NIS" value={santri.nis} mono />
-                            <Field label="Gender" value={getGenderLabel(santri.gender)} />
-                            <Field label="Tempat Lahir" value={santri.birthPlace} />
-                            <Field label="Tanggal Lahir" value={santri.birthDate ? formatDate(santri.birthDate) : null} />
-                            <Field label="Umur" value={calcAge(santri.birthDate)} />
-                            <Field label="No. HP" value={santri.phone} />
-                            <Field label="Gedung" value={gedungName} />
-                            <Field label="Lantai" value={lantaiName} />
-                            <Field label="Kamar" value={kamarName} />
-                            <Field label="Jenjang" value={jenjang} />
-                            <Field label="Kelas" value={kelas} />
-                            <Field label="NIK" value={(santri as any).nik} mono />
-                            <Field label="No. KK" value={(santri as any).noKK} mono />
-                            <Field label="Tanggal Masuk" value={(santri as any).enrollmentDate ? formatDate((santri as any).enrollmentDate) : null} />
-                            <Field label="Jenjang Pendidikan" value={(santri as any).educationLevel} />
-                            {(santri as any).deactivatedAt && (
-                                <div className="md:col-span-2 flex items-center gap-3 px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-200 text-gray-600 text-xs font-semibold">🎓 Alumni</span>
-                                    <span className="text-sm text-slate-600">Tanggal Keluar: <strong>{formatDate((santri as any).deactivatedAt)}</strong></span>
-                                </div>
-                            )}
-                        </dl>
-                    </div>
+                    {/* Data Pribadi (dengan RoleGuard NIK/KK) */}
+                    <DataPribadiSection
+                        santri={santri}
+                        jenjang={jenjang}
+                        kelas={kelas}
+                        kamarName={kamarName}
+                        lantaiName={lantaiName}
+                        gedungName={gedungName}
+                    />
 
-                    {/* Alamat */}
-                    {(() => {
-                        const addr = (santri.address && typeof santri.address === 'object') ? santri.address as Record<string, string> : null
-                        return (
-                            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                                <div className="flex items-center gap-2.5 mb-5 pb-4 border-b border-slate-100">
-                                    <div className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center">
-                                        <svg className="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        </svg>
-                                    </div>
-                                    <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Alamat</h3>
-                                </div>
-                                {addr && Object.values(addr).some((v) => v) ? (
-                                    <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
-                                        <div className="md:col-span-2">
-                                            <Field label="Jalan" value={addr.jalan} />
-                                        </div>
-                                        {/* RT/RW: priority kolom terpisah, fallback rt_rw lama */}
-                                        <Field
-                                            label="RT / RW"
-                                            value={
-                                                (addr.rt || addr.rw)
-                                                    ? `RT ${addr.rt?.padStart(3, '0') ?? '-'} / RW ${addr.rw?.padStart(3, '0') ?? '-'}${addr.dusun ? ` — Dusun ${addr.dusun}` : ''}`
-                                                    : (addr.rt_rw || null)
-                                            }
-                                        />
-                                        {/* Dusun sebagai field terpisah jika ada dan tidak di-inline RT/RW */}
-                                        {addr.dusun && !addr.rt && !addr.rw && (
-                                            <Field label="Dusun" value={addr.dusun} />
-                                        )}
-                                        <Field label="Kelurahan / Desa" value={addr.kelurahan} />
-                                        <Field label="Kecamatan" value={addr.kecamatan} />
-                                        <Field label="Kota / Kabupaten" value={addr.kota} />
-                                        <Field label="Provinsi" value={addr.provinsi} />
-                                    </dl>
-                                ) : (
-                                    <p className="text-sm text-slate-300 italic">Belum diisi</p>
-                                )}
-                            </div>
-                        )
-                    })()}
+                    {/* Alamat (RT/RW terstruktur) */}
+                    <AlamatSection address={santri.address as any} />
 
                     {/* File Kartu Keluarga (KK) */}
                     <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

@@ -90,3 +90,13 @@ Status: Selesai
 - Sample baris: Krajan/005/003. Header aliases: rt/rw, rtrw, dusun (opsional)
 - TypeScript: 0 error
 Status: Selesai
+
+---
+[2026-03-08 06:47 WIB] - Fix Detail Santri: Render Alamat RT/RW + Alumni Badge
+
+- Alamat section: RT/RW terpisah (rt+rw priority) — tampil 'RT 005 / RW 003 — Dusun Krajan'
+- Fallback: jika kolom terpisah kosong, tampil rt_rw lama (backward compat)
+- Dusun tampil inline dengan RT/RW jika ada
+- Tambah alumni badge + Tanggal Keluar di Data Pribadi jika deactivatedAt terisi
+- TypeScript: 0 error. Deploy: PM2 2 instance reload OK
+Status: Selesai
