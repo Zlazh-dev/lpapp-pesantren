@@ -541,6 +541,48 @@ export const santriRouter = router({
             return { data, total, page, totalPages: Math.ceil(total / limit) }
         }),
 
+    // Export archived santri (no pagination) — used by Excel export button on arsip page
+    exportArchivedFull: santriCentralizedProcedure
+        .input(z.object({
+            search: z.string().optional(),
+        }).optional())
+        .query(async ({ ctx, input }) => {
+            const { search } = input ?? {}
+            const where: Prisma.SantriWhereInput = {
+                isActive: false,
+                ...(search ? {
+                    OR: [
+                        { fullName: { contains: search, mode: 'insensitive' } },
+                        { nis: { contains: search, mode: 'insensitive' } },
+                    ],
+                } : {}),
+            }
+            return ctx.prisma.santri.findMany({
+                where,
+                orderBy: { deactivatedAt: 'desc' },
+                select: {
+                    id: true, nis: true, fullName: true, gender: true,
+                    birthDate: true, birthPlace: true, phone: true,
+                    nik: true, noKK: true, enrollmentDate: true, deactivatedAt: true,
+                    educationLevel: true, fatherName: true, motherName: true,
+                    fatherPhone: true, motherPhone: true, waliName: true,
+                    waliPhone: true, description: true, address: true,
+                    classGroup: {
+                        select: {
+                            name: true,
+                            grade: { select: { level: { select: { name: true } } } },
+                        },
+                    },
+                    dormRoom: {
+                        select: {
+                            name: true,
+                            floor: { select: { building: { select: { name: true } } } },
+                        },
+                    },
+                },
+            })
+        }),
+
     // Lightweight search for bulk-assign selection basket
     search: santriViewProcedure
         .input(z.object({

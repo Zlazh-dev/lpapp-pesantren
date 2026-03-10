@@ -100,3 +100,26 @@ Status: Selesai
 - Tambah alumni badge + Tanggal Keluar di Data Pribadi jika deactivatedAt terisi
 - TypeScript: 0 error. Deploy: PM2 2 instance reload OK
 Status: Selesai
+
+---
+[2026-03-08 07:59 WIB] - Refactor Modular + RBAC Frontend
+
+**Foundation Shared Components:**
+- src/components/shared/RoleGuard.tsx: conditional render berdasarkan session.user.roleCodes
+- src/hooks/useCurrentUser.ts: wrapper useSession() + isAdmin/canViewPII helpers + ROLES constants
+
+**Refactor Upload Santri (360 LOC > 90 LOC):**
+- _components/TemplateDownloader.tsx: download Excel + instruksi format
+- _components/FileUploader.tsx: drag-and-drop + processFile + headerMap aliases
+- _components/DataPreviewTable.tsx: preview 20 baris + alumni badge
+- _components/UploadResultModal.tsx: portal modal hasil upload
+- page.tsx: komposisi tipis ~90 LOC
+
+**Refactor Detail Santri (1037 LOC dikurangi ~200 LOC):**
+- _components/Field.tsx: reusable field label+value
+- _components/DataPribadiSection.tsx: data pribadi + RoleGuard (NIK/KK hanya ADMIN+STAF_PENDATAAN)
+- _components/AlamatSection.tsx: RT/RW terstruktur (kolom terpisah + fallback legacy)
+- _components/OrangTuaSection.tsx: data orang tua/wali
+
+TypeScript: 0 error. Deploy PM2 2 instance ? (01:35 WIB)
+Status: Selesai

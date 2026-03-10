@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { trpc } from '@/utils/trpc'
 import { formatDate } from '@/utils/format'
+import * as XLSX from 'xlsx'
 
 export default function ArsipSantriPage() {
     const router = useRouter()
@@ -14,6 +15,9 @@ export default function ArsipSantriPage() {
     const [debouncedSearch, setDebouncedSearch] = useState('')
     const [page, setPage] = useState(1)
     const [confirmSantri, setConfirmSantri] = useState<any>(null)
+    const [showKebab, setShowKebab] = useState(false)
+    const [isExporting, setIsExporting] = useState(false)
+    const kebabRef = useRef<HTMLDivElement>(null)
 
     const LIMIT = 20
     const debounceRef = useState<ReturnType<typeof setTimeout> | null>(null)
@@ -23,11 +27,24 @@ export default function ArsipSantriPage() {
         debounceRef[0] = setTimeout(() => { setDebouncedSearch(value); setPage(1) }, 300)
     }, [debounceRef])
 
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (kebabRef.current && !kebabRef.current.contains(e.target as Node)) setShowKebab(false)
+        }
+        if (showKebab) document.addEventListener('mousedown', handler)
+        return () => document.removeEventListener('mousedown', handler)
+    }, [showKebab])
+
     const listQuery = trpc.santri.listArchived.useQuery({
         search: debouncedSearch || undefined,
         page,
         limit: LIMIT,
     })
+
+    const exportQuery = trpc.santri.exportArchivedFull.useQuery(
+        { search: debouncedSearch || undefined },
+        { enabled: false, staleTime: 0 }
+    )
 
     const reactivateMut = trpc.santri.reactivate.useMutation({
         onSuccess: () => {
@@ -51,13 +68,93 @@ export default function ArsipSantriPage() {
                             {data ? `${data.total} santri nonaktif / boyong` : 'Memuat...'}
                         </p>
                     </div>
-                    <Link
-                        href="/master-data/santri/manage"
-                        className="px-3 py-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 rounded text-xs font-medium flex items-center gap-1.5 transition"
-                    >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                        Santri Aktif
-                    </Link>
+                    <div className="flex items-center gap-2">
+                        <Link
+                            href="/master-data/santri/manage"
+                            className="px-3 py-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 rounded text-xs font-medium flex items-center gap-1.5 transition"
+                        >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                            Santri Aktif
+                        </Link>
+                        <div className="relative" ref={kebabRef}>
+                            <button
+                                onClick={() => setShowKebab(!showKebab)}
+                                className="w-8 h-8 bg-white border border-gray-200 hover:bg-gray-50 text-gray-500 rounded flex items-center justify-center transition"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
+                            </button>
+                            {showKebab && (
+                                <div className="absolute right-0 top-full mt-1 z-50 w-48 rounded-lg border border-gray-200 bg-white shadow-lg overflow-hidden animate-fade-in">
+                                    <button onClick={async () => {
+                                        setIsExporting(true)
+                                        setShowKebab(false)
+                                        try {
+                                            const { data: fullData } = await exportQuery.refetch()
+                                            if (!fullData || fullData.length === 0) {
+                                                alert('Tidak ada data untuk diekspor')
+                                                return
+                                            }
+                                            const rows = fullData.map((s: any) => {
+                                                const addr = (s.address as Record<string, string>) || {}
+                                                return {
+                                                    'NIS': s.nis,
+                                                    'Nama Lengkap': s.fullName,
+                                                    'Gender': s.gender,
+                                                    'Tanggal Lahir': s.birthDate ? new Date(s.birthDate).toLocaleDateString('id-ID') : '',
+                                                    'Tempat Lahir': s.birthPlace || '',
+                                                    'No HP': s.phone || '',
+                                                    'NIK': s.nik || '',
+                                                    'No KK': s.noKK || '',
+                                                    'Tanggal Masuk': s.enrollmentDate ? new Date(s.enrollmentDate).toLocaleDateString('id-ID') : '',
+                                                    'Tanggal Keluar': s.deactivatedAt ? new Date(s.deactivatedAt).toLocaleDateString('id-ID') : '',
+                                                    'Jenjang Pendidikan': s.educationLevel || '',
+                                                    'Nama Ayah': s.fatherName || '',
+                                                    'Nama Ibu': s.motherName || '',
+                                                    'No HP Ayah': s.fatherPhone || '',
+                                                    'No HP Ibu': s.motherPhone || '',
+                                                    'Nama Wali': s.waliName || '',
+                                                    'No HP Wali': s.waliPhone || '',
+                                                    'Deskripsi Wali Santri': s.description || '',
+                                                    'Provinsi': addr.provinsi || '',
+                                                    'Kota/Kabupaten': addr.kota || '',
+                                                    'Kecamatan': addr.kecamatan || '',
+                                                    'Kelurahan': addr.kelurahan || '',
+                                                    'Jalan': addr.jalan || '',
+                                                    'RT/RW': addr.rt_rw || '',
+                                                    'Kelas Terakhir': s.classGroup?.name || '',
+                                                    'Jenjang Terakhir': s.classGroup?.grade?.level?.name || '',
+                                                    'Kamar Terakhir': s.dormRoom?.name || '',
+                                                    'Gedung Terakhir': s.dormRoom?.floor?.building?.name || '',
+                                                }
+                                            })
+                                            const ws = XLSX.utils.json_to_sheet(rows)
+                                            const wb = XLSX.utils.book_new()
+                                            XLSX.utils.book_append_sheet(wb, ws, 'Arsip Santri')
+                                            XLSX.writeFile(wb, `arsip_santri_${new Date().toISOString().slice(0, 10)}.xlsx`)
+                                        } catch (err) {
+                                            console.error('Export failed:', err)
+                                            alert('Gagal ekspor data. Coba lagi.')
+                                        } finally {
+                                            setIsExporting(false)
+                                        }
+                                    }} disabled={isExporting} className="w-full flex items-center gap-3 px-3 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition disabled:opacity-60 disabled:cursor-not-allowed">
+                                        {isExporting ? (
+                                            <>
+                                                <svg className="w-3.5 h-3.5 text-gray-400 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
+                                                Mengekspor...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                                Export Excel
+                                                {data?.total ? <span className="ml-auto text-[10px] text-gray-400 font-normal">({data.total})</span> : null}
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
 
